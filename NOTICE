@@ -1,0 +1,104 @@
+precedent
+Copyright 2026 Egeria Corporation
+
+This product includes software developed by Egeria Corporation and is licensed
+under the Apache License, Version 2.0. See the LICENSE file for the full terms.
+
+Sponsored by OpenGrants (https://opengrants.io).
+
+================================================================================
+UPSTREAM DATA SOURCES
+================================================================================
+
+USAspending
+  Provider:  U.S. Department of the Treasury, Bureau of the Fiscal Service
+  Site:      https://www.usaspending.gov/
+  API:       https://api.usaspending.gov/
+  Source:    https://github.com/fedspendingtransparency/usaspending-api
+  License:   Works of the U.S. federal government; the usaspending-api source
+             repository is released into the public domain under CC0 1.0
+             Universal. Data is public domain.
+  Used for:  Direct federal assistance award records, recipient identifiers,
+             obligation amounts, dates, Assistance Listing numbers, and place
+             of performance. The API contract documents in that repository
+             were used as the authoritative specification for request shapes.
+
+Federal Audit Clearinghouse (FAC)
+  Provider:  U.S. General Services Administration, Technology Transformation
+             Services
+  Site:      https://www.fac.gov/
+  API:       https://api.fac.gov/  (documentation at https://www.fac.gov/api/)
+  Source:    https://github.com/GSA-TTS/FAC
+  Terms:     https://www.fac.gov/api/terms/
+  License:   Works of the U.S. federal government. Review the FAC API terms
+             above before redistributing derived data.
+  Used for:  Single audit submissions and the Schedule of Expenditures of
+             Federal Awards, including direct-versus-pass-through indicators,
+             pass-through entity names, and reported pass-through amounts.
+             The FAC data dictionary (https://www.fac.gov/api/dictionary/) and
+             the Census-to-GSA legacy field crosswalk were used as the
+             authoritative field specification.
+
+api.data.gov
+  Provider:  U.S. General Services Administration
+  Site:      https://api.data.gov/
+  Used for:  API key issuance and rate limiting in front of the FAC API.
+
+OpenGrants API
+  Provider:  OpenGrants
+  Docs:      https://ops.opengrants.io/api-docs
+  Used for:  Optional live enrichment with currently open funding
+             opportunities. Never required for core functionality.
+
+================================================================================
+UPSTREAM OPEN SOURCE PROJECTS AND COMMUNITY WORK
+================================================================================
+
+These projects are not vendored into this repository. They are named because
+this program builds on them, cross-references their output, or depends on the
+public infrastructure they created and maintain.
+
+Nonprofit Open Data Collective
+  Site:      https://github.com/Nonprofit-Open-Data-Collective
+  Key work:  IRS E-file Master Concordance File
+             https://nonprofit-open-data-collective.github.io/irs-efile-master-concordance-file/
+             IRS-Efile-Database
+             https://nonprofit-open-data-collective.github.io/IRS-Efile-Database/
+  Relevance: The concordance file is what makes IRS Form 990 XML tractable
+             across schema versions. It underpins the sibling `funder-graph`
+             repository that `precedent` cross-references by Employer
+             Identification Number.
+
+GivingTuesday 990 Data Collaborative
+  Site:      https://990data.givingtuesday.org/tool-repository/
+  Key work:  form-990-xml-mapper
+             https://github.com/Giving-Tuesday/form-990-xml-mapper
+             form-990-xml-parser
+             https://github.com/Giving-Tuesday/form-990-xml-parser
+             Form 990 Variable Dictionary and 990 Data Mart Dictionary
+  Relevance: As above, via the sibling `funder-graph` repository.
+
+ProPublica Nonprofit Explorer API
+  Site:      https://projects.propublica.org/nonprofits/api
+  Terms:     https://www.propublica.org/about/propublica-data-terms-of-use
+  Relevance: Organization lookup and gap-filling when resolving a recipient
+             name to an Employer Identification Number. Read the data terms
+             before redistributing anything derived from it.
+
+open990odl
+  Site:      https://github.com/990consulting/open990odl
+
+propublica990
+  Site:      https://github.com/Punderthings/propublica990
+
+NBER Form 990 data
+  Site:      https://www.nber.org/research/data/irs-form-990-data
+
+================================================================================
+CONTRIBUTION POSTURE
+================================================================================
+
+Where this project finds a bug or a gap in upstream work, the fix goes upstream
+first as a pull request or an issue, and the fact is recorded in
+docs/research/prior-art.md. This project does not re-implement functionality a
+community project already provides well.
