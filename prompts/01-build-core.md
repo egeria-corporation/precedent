@@ -916,9 +916,10 @@ Do not guess on any of these. Stop, state what you found, state the options, and
 9. **Publishing the derived Unique Entity Identifier to Employer Identification Number
    crosswalk** described in `docs/research/prior-art.md`. Building it locally is fine.
    Publishing it is a redistribution decision under the FAC terms of use and needs a human.
-10. **Any competitor claim or price appearing in code, help text, or output.** All
-    competitor references belong in `docs/research/competitive.md`, they are date-stamped,
-    and they need re-verification before publication.
+10. **Any competitor name or price, anywhere.** The program rule is that no repository
+    names a commercial competitor or quotes its price — not in code, help text, output,
+    documentation, or a hosted page. Describe the category instead. See
+    `docs/program/CONVENTIONS.md`, "No competitor naming or pricing."
 11. **Rate limiting or blocking from either upstream.** If you get sustained 429 or a block,
     stop and report. Do not work around it, do not rotate anything, do not add parallelism.
     Being a good citizen of free public infrastructure is a requirement of this program.

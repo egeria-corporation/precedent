@@ -434,8 +434,9 @@ cross-links.
 6. **Sustained 429 or a block from either upstream.** Stop, report, do not work around it,
    do not add parallelism.
 7. **Anything reading as an eligibility determination, a recommendation, or a prediction.**
-8. **A competitor name or price appearing anywhere on the site.** All competitor references
-   belong in `docs/research/competitive.md`, date-stamped and re-verified before use.
+8. **A competitor name or price appearing anywhere on the site.** The program rule is that no
+   repository or hosted page names a commercial competitor or quotes its price. Describe the
+   category instead. See `docs/program/CONVENTIONS.md`, "No competitor naming or pricing."
 9. **Generating pages for combinations with no data** in order to grow the URL count. That
    is the single most effective way to make this site look like spam, and it needs an
    explicit human decision, which will be no.
