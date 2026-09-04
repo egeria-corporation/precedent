@@ -1,0 +1,83 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "precedent"
+version = "0.1.0"
+description = "Federal award history and pass-through finder: who actually wins a federal program, and who passes the money down."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.11"
+authors = [{ name = "Egeria Corporation" }]
+keywords = ["federal grants", "usaspending", "single audit", "subaward", "nonprofit", "pass-through"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Other Audience",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Sociology",
+]
+
+# The build prompt fixes this set and asks that anything beyond it be justified in the pull
+# request. No pandas and no numpy on purpose: the statistics are computable from the standard
+# library `statistics` module, the datasets are small, and a numeric stack would be the
+# largest thing in the dependency tree for no benefit.
+dependencies = [
+  "click>=8.1",
+  "httpx>=0.27",
+  "pydantic>=2.9",
+  "pyyaml>=6.0",
+  "rich>=13.9",
+]
+
+[project.optional-dependencies]
+# The MCP server is an adapter over the library, so `uvx precedent history` never pays for
+# an SDK a command-line user does not touch.
+mcp = ["mcp>=2.0"]
+
+[project.scripts]
+precedent = "precedent.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/egeria-corporation/precedent"
+Hosted = "https://awards.opengrants.io"
+Issues = "https://github.com/egeria-corporation/precedent/issues"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3",
+  "ruff>=0.8",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/precedent"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/precedent", "tests", "README.md", "LICENSE", "NOTICE"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+# Ruff formats fenced code blocks inside Markdown; letting it loose on the docs and the build
+# prompts rewrites illustrative snippets and fails CI on files nobody executes.
+extend-exclude = ["docs", "prompts", "*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+ignore = [
+  "E501",   # line length is the formatter's job
+  "RUF012", # mutable class attrs; the models here are pydantic, which handles its own
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["precedent"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["error::DeprecationWarning:precedent"]
