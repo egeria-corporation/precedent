@@ -33,6 +33,75 @@ def main() -> None:
     """
 
 
+@main.command("history")
+@click.argument("program")
+@click.option(
+    "--since", type=int, default=None, help="First fiscal year. Default: five complete years back."
+)
+@click.option(
+    "--until", type=int, default=None, help="Last fiscal year. Default: the last complete one."
+)
+@click.option(
+    "--lookback",
+    type=int,
+    default=5,
+    show_default=True,
+    help="Lookback years for the new-entrant rate.",
+)
+@click.option(
+    "--state", "states", multiple=True, help="Limit to recipients in a state. Repeatable."
+)
+@click.option("--json", "as_json", is_flag=True, help="Machine-readable output.")
+@click.option("--no-cache", is_flag=True, help="Ignore anything already cached.")
+def history(
+    program: str,
+    since: int | None,
+    until: int | None,
+    lookback: int,
+    states: tuple[str, ...],
+    as_json: bool,
+    no_cache: bool,
+) -> None:
+    """Award history and the new-entrant rate for one Assistance Listing.
+
+    
+      precedent history 93.243
+      precedent history 16.842 --since 2020 --until 2024
+      precedent history 93.243 --state OH --json
+
+    Needs no account and no key.
+    """
+    import json as jsonlib
+
+    from precedent.api import award_history
+    from precedent.config import Config
+    from precedent.errors import PrecedentError
+    from precedent.http import HttpClient
+    from precedent.render import render_history
+
+    config = Config.from_env()
+    try:
+        with HttpClient(config) as http:
+            result = award_history(
+                program,
+                since_fy=since,
+                until_fy=until,
+                lookback_years=lookback,
+                states=list(states) or None,
+                config=config,
+                http=http,
+                no_cache=no_cache or None,
+            )
+    except PrecedentError as error:
+        _emit(f"STOP: {error}")
+        sys.exit(4)
+
+    if as_json:
+        _emit(jsonlib.dumps(result.as_dict(), indent=2, default=str))
+        return
+    _emit(render_history(result))
+
+
 @main.command("programs")
 @click.argument("search_text")
 @click.option("--limit", default=20, show_default=True, help="How many listings to return.")
