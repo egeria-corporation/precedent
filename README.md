@@ -57,7 +57,7 @@ Sixty seconds, no account, no API key, no database.
 uvx precedent history 93.243
 
 # Or find the program first
-uvx precedent programs --search "opioid treatment"
+uvx precedent programs "opioid"
 
 # Machine-readable
 uvx precedent history 93.243 --json

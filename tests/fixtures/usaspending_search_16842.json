@@ -1,0 +1,183 @@
+{
+  "spending_level": "awards",
+  "limit": 100,
+  "results": [
+    {
+      "internal_id": 234931512,
+      "Award ID": "2018YBFXK007",
+      "Recipient Name": "COUNTY OF CLACKAMAS",
+      "Recipient UEI": "NVWKAVB8JND6",
+      "Recipient Location": {
+        "location_country_code": "USA",
+        "country_name": "UNITED STATES",
+        "state_code": "OR",
+        "state_name": "Oregon",
+        "city_name": "OREGON CITY",
+        "county_code": "005",
+        "county_name": "CLACKAMAS",
+        "address_line1": "2051 KAEN RD",
+        "address_line2": null,
+        "address_line3": null,
+        "congressional_code": "05",
+        "zip4": "1819",
+        "zip5": "97045",
+        "foreign_postal_code": null,
+        "foreign_province": null
+      },
+      "Award Amount": 1000999.0,
+      "Base Obligation Date": "2018-09-27",
+      "Start Date": "2018-10-01",
+      "End Date": "2021-09-30",
+      "Awarding Agency": "Department of Justice",
+      "Awarding Sub Agency": "Office of Justice Programs",
+      "Place of Performance State Code": "OR",
+      "Assistance Listings": [
+        {
+          "cfda_number": "16.842",
+          "cfda_program_title": "OPIOD AFFECTED YOUTH INITIATIVE"
+        },
+        {
+          "cfda_number": "16.842",
+          "cfda_program_title": "OPIOID AFFECTED YOUTH INITIATIVE"
+        }
+      ],
+      "recipient_id": "4bb21608-dfe9-1a0b-2bc6-ef8d38de9aa0-C",
+      "awarding_agency_id": 252,
+      "agency_slug": "department-of-justice",
+      "generated_internal_id": "ASST_NON_2018YBFXK007_015"
+    },
+    {
+      "internal_id": 234931508,
+      "Award ID": "2018YBFXK003",
+      "Recipient Name": "COUNTY OF ALAMEDA",
+      "Recipient UEI": "FUZ9PX5SFRH8",
+      "Recipient Location": {
+        "location_country_code": "USA",
+        "country_name": "UNITED STATES",
+        "state_code": "CA",
+        "state_name": "California",
+        "city_name": "OAKLAND",
+        "county_code": "001",
+        "county_name": "ALAMEDA",
+        "address_line1": "400 BROADWAY",
+        "address_line2": null,
+        "address_line3": null,
+        "congressional_code": "13",
+        "zip4": "3807",
+        "zip5": "94607",
+        "foreign_postal_code": null,
+        "foreign_province": null
+      },
+      "Award Amount": 1000474.0,
+      "Base Obligation Date": "2018-09-24",
+      "Start Date": "2018-10-01",
+      "End Date": "2022-09-30",
+      "Awarding Agency": "Department of Justice",
+      "Awarding Sub Agency": "Office of Justice Programs",
+      "Place of Performance State Code": "CA",
+      "Assistance Listings": [
+        {
+          "cfda_number": "16.842",
+          "cfda_program_title": "OPIOD AFFECTED YOUTH INITIATIVE"
+        },
+        {
+          "cfda_number": "16.842",
+          "cfda_program_title": "OPIOID AFFECTED YOUTH INITIATIVE"
+        }
+      ],
+      "recipient_id": "af86ae97-7814-275a-520a-067f2327fb53-C",
+      "awarding_agency_id": 252,
+      "agency_slug": "department-of-justice",
+      "generated_internal_id": "ASST_NON_2018YBFXK003_015"
+    },
+    {
+      "internal_id": 234939229,
+      "Award ID": "2019YBFXK007",
+      "Recipient Name": "YUROK TRIBE",
+      "Recipient UEI": "MPW4FLVA9JJ5",
+      "Recipient Location": {
+        "location_country_code": "USA",
+        "country_name": "UNITED STATES",
+        "state_code": "CA",
+        "state_name": "California",
+        "city_name": "KLAMATH",
+        "county_code": "015",
+        "county_name": "DEL NORTE",
+        "address_line1": "POST OFFICE BOX 1027",
+        "address_line2": null,
+        "address_line3": null,
+        "congressional_code": "02",
+        "zip4": "1027",
+        "zip5": "95548",
+        "foreign_postal_code": null,
+        "foreign_province": null
+      },
+      "Award Amount": 1000000.0,
+      "Base Obligation Date": "2019-09-03",
+      "Start Date": "2019-10-01",
+      "End Date": "2025-09-30",
+      "Awarding Agency": "Department of Justice",
+      "Awarding Sub Agency": "Office of Justice Programs",
+      "Place of Performance State Code": "CA",
+      "Assistance Listings": [
+        {
+          "cfda_number": "16.842",
+          "cfda_program_title": "OPIOID AFFECTED YOUTH INITIATIVE"
+        }
+      ],
+      "recipient_id": "4f1875ee-6022-b0c0-7904-42fdce8e0a40-C",
+      "awarding_agency_id": 252,
+      "agency_slug": "department-of-justice",
+      "generated_internal_id": "ASST_NON_2019YBFXK007_015"
+    },
+    {
+      "internal_id": 234939225,
+      "Award ID": "2019YBFXK002",
+      "Recipient Name": "COUNTY OF PINELLAS",
+      "Recipient UEI": "R37RMC63XKG1",
+      "Recipient Location": {
+        "location_country_code": "USA",
+        "country_name": "UNITED STATES",
+        "state_code": "FL",
+        "state_name": "Florida",
+        "city_name": "CLEARWATER",
+        "county_code": "103",
+        "county_name": "PINELLAS",
+        "address_line1": "315 COURT ST RM 601",
+        "address_line2": null,
+        "address_line3": null,
+        "congressional_code": "13",
+        "zip4": "5165",
+        "zip5": "33756",
+        "foreign_postal_code": null,
+        "foreign_province": null
+      },
+      "Award Amount": 1000000.0,
+      "Base Obligation Date": "2019-09-03",
+      "Start Date": "2019-10-01",
+      "End Date": "2022-09-30",
+      "Awarding Agency": "Department of Justice",
+      "Awarding Sub Agency": "Office of Justice Programs",
+      "Place of Performance State Code": "FL",
+      "Assistance Listings": [
+        {
+          "cfda_number": "16.842",
+          "cfda_program_title": "OPIOID AFFECTED YOUTH INITIATIVE"
+        }
+      ],
+      "recipient_id": "9e870148-6f08-5ef4-650f-2079be3871a0-C",
+      "awarding_agency_id": 252,
+      "agency_slug": "department-of-justice",
+      "generated_internal_id": "ASST_NON_2019YBFXK002_015"
+    }
+  ],
+  "page_metadata": {
+    "page": 1,
+    "hasNext": false,
+    "last_record_unique_id": null,
+    "last_record_sort_value": "None"
+  },
+  "messages": [
+    "For searches, time period start and end dates are currently limited to an earliest date of 2007-10-01.  For data going back to 2000-10-01, use either the Custom Award Download feature on the website or one of our download or bulk_download API endpoints as listed on https://api.usaspending.gov/docs/endpoints. "
+  ]
+}

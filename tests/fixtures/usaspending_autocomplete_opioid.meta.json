@@ -1,0 +1,14 @@
+{
+  "source": "usaspending",
+  "endpoint": "https://api.usaspending.gov/api/v2/autocomplete/cfda/",
+  "method": "POST",
+  "request_body": {
+    "search_text": "opioid",
+    "limit": 5
+  },
+  "request_params": null,
+  "status": 200,
+  "retrieved": "2026-09-05T14:31:13+00:00",
+  "trimmed": null,
+  "note": "Captured by precedent.devtools.capture_fixture. Trimmed fixtures are not byte-identical to the upstream response."
+}
