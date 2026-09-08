@@ -50,8 +50,9 @@ federal-precedent = "precedent.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/egeria-corporation/precedent"
-Hosted = "https://awards.opengrants.io"
 Issues = "https://github.com/egeria-corporation/precedent/issues"
+# Hosted = "https://awards.opengrants.io" - restore when the site exists. A dead link on
+# the project page is worse than no link.
 
 [dependency-groups]
 dev = [
