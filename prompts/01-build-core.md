@@ -61,7 +61,7 @@ statistics layer. There is no database, no ingest pipeline, no warehouse. Do not
 
 - **Python 3.11 or newer.** `uv` for dependency management. `ruff` for lint and format.
   `pytest` for tests. `pyproject.toml` with a console entry point. The package must be
-  runnable as `uvx precedent ...` with no clone and no install ritual.
+  runnable as `uvx federal-precedent ...` with no clone and no install ritual.
 - **Dependencies stay small.** `httpx`, `typer` (or `click`), `rich` for terminal output,
   `pydantic` v2 for models, `mcp` for the server, `pyyaml` for the alias table. Justify
   anything beyond that in the pull request. No pandas, no numpy: the statistics here are
@@ -939,7 +939,7 @@ Do not guess on any of these. Stop, state what you found, state the options, and
 
 ## 18. Definition of done
 
-- [ ] `uvx precedent history 93.243` returns a correct profile in under 60 seconds on a
+- [ ] `uvx federal-precedent history 93.243` returns a correct profile in under 60 seconds on a
       cold cache, with no credentials of any kind
 - [ ] Section 16 verification passes within tolerance, and the `H79TI081686` hand check is
       correct

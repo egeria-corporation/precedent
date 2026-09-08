@@ -3,7 +3,7 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "precedent"
+name = "federal-precedent"
 version = "0.1.0"
 description = "Federal award history and pass-through finder: who actually wins a federal program, and who passes the money down."
 readme = "README.md"
@@ -41,7 +41,12 @@ dependencies = [
 mcp = ["mcp>=2.0"]
 
 [project.scripts]
+# Two names for one program. `precedent` is the command; `federal-precedent` matches the
+# distribution so `uvx federal-precedent history 93.243` resolves without --from. The
+# distribution could not be called `precedent`: that name on PyPI is a reservation for an
+# architecture-decision-record project, a different sense of the word.
 precedent = "precedent.cli:main"
+federal-precedent = "precedent.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/egeria-corporation/precedent"

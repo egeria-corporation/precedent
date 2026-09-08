@@ -352,7 +352,7 @@ cross-links.
 
 - [ ] `curl https://awards.opengrants.io/programs/93.243` returns HTML containing the median
       and the new-entrant rate, with no JavaScript executed
-- [ ] The statistics on `/programs/93.243` match `uvx precedent history 93.243 --json`
+- [ ] The statistics on `/programs/93.243` match `uvx federal-precedent history 93.243 --json`
       exactly, and a test pins both
 - [ ] Every entity page has valid JSON-LD, checked against Google's Rich Results Test and a
       schema validator

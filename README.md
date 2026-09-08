@@ -52,15 +52,20 @@ reads the pass-through layer from single audits, and it tells you what it does n
 
 Sixty seconds, no account, no API key, no database.
 
+The package is `federal-precedent` on PyPI and the command it installs is `precedent`.
+They differ because `precedent` on PyPI is a name reservation for an unrelated
+architecture-decision-record project. `uvx federal-precedent ...` below runs without
+installing anything; if you install it properly, the command is just `precedent`.
+
 ```bash
 # Award history for a program you already have in mind
-uvx precedent history 93.243
+uvx federal-precedent history 93.243
 
 # Or find the program first
-uvx precedent programs "opioid"
+uvx federal-precedent programs "opioid"
 
 # Machine-readable
-uvx precedent history 93.243 --json
+uvx federal-precedent history 93.243 --json
 ```
 
 The `history` command needs no credentials at all. The `passthrough` command needs a free
@@ -69,13 +74,13 @@ Federal Audit Clearinghouse API key, which takes about two minutes to get by ema
 
 ```bash
 export FAC_API_KEY="..."          # free, from https://www.fac.gov/api/signup/
-uvx precedent passthrough --state OH --program 93.045
+uvx federal-precedent passthrough --state OH --program 93.045
 ```
 
 Run it as an MCP server for Claude or any other MCP client:
 
 ```bash
-uvx precedent mcp
+uvx federal-precedent mcp
 ```
 
 ---
@@ -118,7 +123,7 @@ Regional and National Significance.** Awarding agency: Department of Health and 
 Services, Substance Abuse and Mental Health Services Administration.
 
 ```
-$ uvx precedent history 93.243 --since FY2020 --until FY2024
+$ uvx federal-precedent history 93.243 --since FY2020 --until FY2024
 ```
 
 ```
@@ -200,7 +205,7 @@ local senior centers and meal providers.
 
 ```
 $ export FAC_API_KEY="..."
-$ uvx precedent passthrough --state OH --program 93.045
+$ uvx federal-precedent passthrough --state OH --program 93.045
 ```
 
 > **The output below is illustrative.** The structure it shows is real and verifiable:
@@ -398,7 +403,7 @@ The same capabilities are exposed as Model Context Protocol tools for agent use:
 lives in the library; the CLI and the MCP server are both thin adapters over it.
 
 ```bash
-uvx precedent mcp
+uvx federal-precedent mcp
 ```
 
 ---

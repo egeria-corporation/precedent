@@ -7,6 +7,13 @@ All notable changes to `precedent` are documented here. This project follows [Se
 ### Added
 - Repository scaffolding: documentation, research dossier, and build prompts.
 
+### Changed
+- The PyPI distribution is `federal-precedent`, not `precedent`. That name is taken by a
+  0.0.0 reservation for an architecture-decision-record project, so `uvx precedent` would
+  have installed something else entirely and failed. The command is still `precedent`; a
+  second console script named for the distribution means `uvx federal-precedent` resolves
+  without `--from`.
+
 ### Added
 - `analysis/passthrough.py`, `analysis/coverage.py`, `precedent passthrough`: who passes
   federal money down to organizations in one state. Two evidence streams computed
