@@ -77,11 +77,8 @@ export FAC_API_KEY="..."          # free, from https://www.fac.gov/api/signup/
 uvx federal-precedent passthrough --state OH --program 93.045
 ```
 
-Run it as an MCP server for Claude or any other MCP client:
-
-```bash
-uvx federal-precedent mcp
-```
+An MCP server for Claude and other MCP clients is next on the roadmap and is not in this
+release. `precedent --help` lists what ships today.
 
 ---
 
@@ -396,15 +393,14 @@ command still returns its full public-data result.
 
 ---
 
-## MCP server
+## MCP server — planned, not in this release
 
-The same capabilities are exposed as Model Context Protocol tools for agent use:
-`award_history`, `passthrough_finder`, `recipient_profile`, `find_program`. Core logic
-lives in the library; the CLI and the MCP server are both thin adapters over it.
-
-```bash
-uvx federal-precedent mcp
-```
+The intent is to expose the same capabilities as Model Context Protocol tools for agent
+use: `award_history`, `passthrough_finder`, `recipient_profile`, `find_program`. The core
+logic already lives in the library precisely so the CLI and an MCP server can both be thin
+adapters over it, but the server itself is not written yet. It is not installed by this
+release and `precedent mcp` does not exist. When it lands it will be documented here with
+a version number.
 
 ---
 
