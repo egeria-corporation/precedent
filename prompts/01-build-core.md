@@ -316,8 +316,13 @@ Where a convention is stated, do not substitute an equivalent-looking one.
    `since_fy`. Default 5. So for FY2020 to FY2024 with the default, the lookback is FY2015
    to FY2019.
 3. Fetch once, on the union of both ranges, using `date_type: "action_date"` from
-   `date(since_fy - lookback_years - 1, 10, 1)` to `date(until_fy, 9, 30)`. One pull, not
-   two, because an award straddles both.
+   `date(since_fy - lookback_years - 1, 10, 1)` to `date(until_fy + 1, 9, 30)`. One pull,
+   not two, because an award straddles both. The end is deliberately a year past the
+   window: `action_date` filters on transaction activity, not on the first obligation that
+   decides an award's cohort year, so an award obligated inside the window that was later
+   modified is only returned by the wider pull. Stopping at `date(until_fy, 9, 30)` loses
+   521 of the 1,058 awards belonging to FY2020-FY2024 for 93.243. This widens what is
+   fetched, never what is counted: step 5 still assigns the cohort year.
 4. Deduplicate on `generated_internal_id`.
 5. Compute each award's fiscal year from **`Base Obligation Date`**:
    `fy = year + 1 if month >= 10 else year`. If `Base Obligation Date` is null, fall back to
@@ -325,10 +330,16 @@ Where a convention is stated, do not substitute an equivalent-looking one.
    `excluded.missing_date`.
 6. `window_awards` = awards whose computed fiscal year is in the window.
    `lookback_awards` = awards whose computed fiscal year is in the lookback.
-7. From `window_awards`, exclude awards with `Award Amount` null or less than or equal to
-   zero from all **amount** statistics, and count them in `excluded.nonpositive_amount`.
-   They still count for recipient identity, because winning a zero-dollar-net award still
-   means the organization was a recipient. Report both counts.
+7. Exclude awards whose `Award Amount` is null, zero or negative from the universe
+   entirely - not from the amount statistics alone - and count them in
+   `excluded.nonpositive_amount`. `Award Amount` is the award's total obligation over its
+   life, so at or below zero means the award was fully de-obligated: approved and then
+   unwound. The organization did not end up funded, so it is not a recipient, and counting
+   it as one would say the program let somebody new in when it gave them nothing. That is
+   the precise measure this tool exists to get right. Apply the rule to the lookback as
+   well as the window, for the same reason: a de-obligated award is not evidence that an
+   organization had won before. For 93.243 over FY2020-FY2024 there are 513 such awards,
+   and they alone move the new-entrant count from 284 to 377.
 
 ### 9.2 Award size statistics
 

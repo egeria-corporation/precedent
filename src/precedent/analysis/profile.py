@@ -15,6 +15,10 @@ choices produce two different numbers and only one of them can be reproduced:
 * Percentiles use ``method="inclusive"``. The standard library default is exclusive and
   gives different answers on small samples, which is exactly a niche program's situation.
 * Distribution buckets are fixed, not data-derived, so two programs can be compared.
+* An award whose ``Award Amount`` is null, zero or negative is not in the universe at all.
+  That figure is the award's lifetime obligation, so at or below zero means it was unwound;
+  the organization did not end up funded, and counting it as a recipient would overstate a
+  program's openness.
 """
 
 from __future__ import annotations
@@ -81,7 +85,11 @@ def award_fiscal_year(award: Award) -> int | None:
 
 @dataclass
 class Excluded:
-    """Awards left out of some statistic, counted rather than silently dropped."""
+    """Awards left out, counted rather than silently dropped.
+
+    ``nonpositive_amount`` leaves the universe entirely - not the amount statistics alone -
+    because an award that netted zero or less funded nobody.
+    """
 
     missing_date: int = 0
     nonpositive_amount: int = 0
@@ -227,13 +235,21 @@ def build_profile(
         if fy is None:
             excluded.missing_date += 1
             continue
+        # `Award Amount` is the award's total obligation over its life, so a value at or
+        # below zero means it was fully de-obligated: approved, then unwound. Counting such
+        # an organization as a recipient - and therefore as a possible new entrant - would
+        # say a program let someone new in when in the end it gave them nothing, which
+        # overstates exactly the openness this tool exists to measure. For 93.243 over
+        # FY2020-FY2024 there are 513 of them, and they alone move the new-entrant count
+        # from 284 to 377.
+        if not (award.amount and award.amount > 0):
+            excluded.nonpositive_amount += 1
+            continue
         if since_fy <= fy <= until_fy:
             window.append(award)
         elif lookback_since_fy <= fy < since_fy:
             lookback.append(award)
 
-    # Identity is resolved for every window award, including zero-dollar ones: winning a
-    # net-zero award still means the organization was a recipient.
     window_identities: list[Identity | None] = [resolve(a) for a in window]
     excluded.unresolved_identity = sum(1 for i in window_identities if i is None)
 
@@ -246,8 +262,7 @@ def build_profile(
             continue
         key = ident.key
         awards_by_identity[key].add(award.generated_internal_id)
-        if award.amount and award.amount > 0:
-            dollars_by_identity[key] += award.amount
+        dollars_by_identity[key] += award.amount or 0.0
         if award.recipient_name:
             names_by_identity[key][award.recipient_name] += 1
         uei_by_identity.setdefault(key, award.recipient_uei)
@@ -259,9 +274,8 @@ def build_profile(
     repeat_winners = {k for k, ids in awards_by_identity.items() if len(ids) >= 2}
     recipient_count = len(window_keys)
 
-    amounts = [a.amount for a in window if a.amount and a.amount > 0]
-    excluded.nonpositive_amount = len(window) - len(amounts)
-    sizes = size_stats([float(a) for a in amounts])
+    # Every window award has a positive amount; the rest never entered the window.
+    sizes = size_stats([float(a.amount) for a in window if a.amount])
 
     ranked_dollars = sorted(
         dollars_by_identity.items(), key=lambda kv: (-kv[1], kv[0])
@@ -276,8 +290,8 @@ def build_profile(
     states = Counter(a.place_of_performance_state for a in window if a.place_of_performance_state)
     state_dollars: dict[str, float] = defaultdict(float)
     for a in window:
-        if a.place_of_performance_state and a.amount and a.amount > 0:
-            state_dollars[a.place_of_performance_state] += a.amount
+        if a.place_of_performance_state:
+            state_dollars[a.place_of_performance_state] += a.amount or 0.0
 
     def rows(order: list[tuple[tuple[str, str], Any]]) -> list[RecipientRow]:
         out = []

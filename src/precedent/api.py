@@ -31,6 +31,9 @@ from precedent.sources.usaspending import (
     build_filters,
 )
 
+# How far past the window to fetch. See award_history: action_date is not the cohort date.
+FETCH_OVERHANG_YEARS = 1
+
 
 @dataclass
 class Provenance:
@@ -107,6 +110,14 @@ def award_history(
 
     One pull covers the window and its lookback together, because an award straddles both
     and two pulls would fetch the boundary twice and disagree about it.
+
+    The fetch runs a year past the end of the window. ``action_date`` filters an award on
+    its transaction activity, not on the first obligation that decides its cohort year, so
+    an award obligated inside the window that saw a later modification is only returned by
+    the wider pull. Stopping at the window's own last day loses 521 of the 1,058 awards
+    that belong to FY2020-FY2024 for Assistance Listing 93.243. Those awards are still
+    bucketed by ``Base Obligation Date``, so the extra year widens what is *fetched* and
+    never what is *counted*.
     """
     if since_fy is None or until_fy is None:
         auto_since, auto_until = default_window()
@@ -120,7 +131,7 @@ def award_history(
         filters = build_filters(
             program,
             fiscal_year_start(since_fy - lookback_years).isoformat(),
-            fiscal_year_end(until_fy).isoformat(),
+            fiscal_year_end(until_fy + FETCH_OVERHANG_YEARS).isoformat(),
             recipient_states=states,
         )
         awards, retrieved = UsaSpending(client).search(filters)

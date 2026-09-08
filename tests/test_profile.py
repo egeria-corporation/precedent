@@ -209,18 +209,48 @@ class TestRepeatWinnersAndConcentration:
         assert p.concentration_top10_share == pytest.approx(0.998)
 
     def test_no_dollars_means_no_concentration_rather_than_zero(self) -> None:
+        # The only award nets zero, so the window is empty and there is nothing to divide.
         p = self.profile([award("a", amount=0)])
+        assert p.recipient_count == 0
         assert p.concentration_top10_share is None
 
 
 class TestExclusionsAndCaveats:
-    def test_a_zero_dollar_award_still_makes_its_recipient_a_recipient(self) -> None:
+    def test_a_net_zero_award_does_not_make_its_recipient_a_recipient(self) -> None:
+        # Award Amount is the lifetime obligation. At or below zero the award was unwound,
+        # so the organization was never funded and must not count as one a program let in.
         p = build_profile(
-            [award("a", amount=0, uei="AAAAAAAAAAAA")], program="x", since_fy=2020, until_fy=2024
+            [
+                award("a", amount=0, uei="AAAAAAAAAAAA"),
+                award("b", amount=-0.34, uei="BBBBBBBBBBBB"),
+                award("c", amount=None, uei="CCCCCCCCCCCC"),
+                award("d", amount=50_000, uei="DDDDDDDDDDDD"),
+            ],
+            program="x",
+            since_fy=2020,
+            until_fy=2024,
         )
-        assert p.recipient_count == 1, "winning a net-zero award still means they won"
-        assert p.excluded.nonpositive_amount == 1
-        assert p.sizes.count == 0, "but it is not an amount statistic"
+        assert p.recipient_count == 1, "only the funded one"
+        assert p.window_award_count == 1
+        assert p.excluded.nonpositive_amount == 3
+        assert p.sizes.count == 1
+
+    def test_a_lookback_award_that_netted_zero_does_not_make_a_recipient_a_returner(
+        self,
+    ) -> None:
+        # Symmetric with the window: if a de-obligated award did not fund them, it is not
+        # evidence they had won before either.
+        p = build_profile(
+            [
+                award("w", base="2021-01-01", uei="AAAAAAAAAAAA"),
+                award("l", base="2017-01-01", amount=0, uei="AAAAAAAAAAAA"),
+            ],
+            program="x",
+            since_fy=2020,
+            until_fy=2024,
+        )
+        assert p.lookback_award_count == 0
+        assert p.new_entrant_count == 1
 
     def test_an_undated_award_is_counted_out_loud(self) -> None:
         p = build_profile(
