@@ -1,0 +1,16 @@
+{
+  "source": "fac",
+  "endpoint": "https://api.fac.gov/passthrough",
+  "method": "GET",
+  "request_body": null,
+  "request_params": {
+    "report_id": "in.(\"2022-12-GSAFAC-0000029239\",\"2023-01-GSAFAC-0000002079\",\"2023-01-GSAFAC-0000002431\",\"2023-01-GSAFAC-0000004559\",\"2023-02-GSAFAC-0000004013\",\"2023-02-GSAFAC-0000005238\")",
+    "select": "report_id,award_reference,passthrough_name,passthrough_id,audit_year,auditee_uei",
+    "order": "report_id.asc,award_reference.asc",
+    "limit": "40"
+  },
+  "status": 200,
+  "retrieved": "2026-09-08T19:12:22+00:00",
+  "trimmed": null,
+  "note": "Captured by precedent.devtools.capture_fixture. Trimmed fixtures are not byte-identical to the upstream response."
+}

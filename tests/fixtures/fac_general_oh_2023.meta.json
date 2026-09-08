@@ -1,0 +1,17 @@
+{
+  "source": "fac",
+  "endpoint": "https://api.fac.gov/general",
+  "method": "GET",
+  "request_body": null,
+  "request_params": {
+    "auditee_state": "eq.OH",
+    "audit_year": "eq.2023",
+    "select": "report_id,audit_year,auditee_name,auditee_ein,auditee_uei,auditee_city,auditee_state,entity_type,total_amount_expended,fy_start_date,fy_end_date,fac_accepted_date",
+    "order": "report_id.asc",
+    "limit": "6"
+  },
+  "status": 200,
+  "retrieved": "2026-09-08T19:11:55+00:00",
+  "trimmed": null,
+  "note": "Captured by precedent.devtools.capture_fixture. Trimmed fixtures are not byte-identical to the upstream response."
+}

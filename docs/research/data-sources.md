@@ -269,6 +269,13 @@ pass-through analysis.
 | `passthrough_name` | text | `PASSTHROUGHNAME` | **Free text typed by the auditee.** The normalization problem |
 | `passthrough_id` | text | `PASSTHROUGHID` | The identifying number the auditee was given by the pass-through entity. Sometimes a state contract number, sometimes a Unique Entity Identifier, sometimes an Employer Identification Number, sometimes blank |
 
+**Correction, verified against the live API 2026-09-08.** The dictionary types `is_direct`,
+`is_passthrough_award`, `is_major` and `is_loan` as `boolean`, and `/federal_awards` returns
+them as the **strings `"Y"` and `"N"`**. Python treats both as truthy, so reading them
+without conversion marks every row direct and inverts the whole pass-through feature. Convert
+explicitly; `sources/fac.py` does, and `tests/test_fac.py` pins it against a captured
+response.
+
 Note what is **not** here: no state, no Employer Identification Number for the pass-through
 entity, no canonical identifier. The pass-through entity is a name and an unstructured
 number. Everything downstream of that is a normalization problem, and pretending otherwise

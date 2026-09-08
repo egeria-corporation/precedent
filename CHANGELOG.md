@@ -7,6 +7,13 @@ All notable changes to `precedent` are documented here. This project follows [Se
 ### Added
 - Repository scaffolding: documentation, research dossier, and build prompts.
 
+### Added
+- `sources/fac.py`: the Federal Audit Clearinghouse client. PostgREST helpers, `in.(...)`
+  chunked at 100 identifiers, pagination that always sends `order=` and stops at a hard
+  bound, and the `is_direct` / `is_passthrough_award` distinction that decides whether an
+  auditee received money through somebody or passed it down. Fixtures captured from the
+  live API.
+
 ### Fixed
 - `award_history` fetches a year past the window it reports on. `action_date` filters on an
   award's transaction activity, not on the `Base Obligation Date` that decides its cohort

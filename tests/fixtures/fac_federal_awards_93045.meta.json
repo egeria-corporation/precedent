@@ -1,0 +1,18 @@
+{
+  "source": "fac",
+  "endpoint": "https://api.fac.gov/federal_awards",
+  "method": "GET",
+  "request_body": null,
+  "request_params": {
+    "federal_agency_prefix": "eq.93",
+    "federal_award_extension": "eq.045",
+    "audit_year": "eq.2023",
+    "select": "report_id,award_reference,federal_agency_prefix,federal_award_extension,federal_program_name,amount_expended,is_direct,is_passthrough_award,passthrough_amount,cluster_name,federal_program_total,is_major,is_loan,findings_count,additional_award_identification,audit_year,auditee_uei",
+    "order": "report_id.asc,award_reference.asc",
+    "limit": "12"
+  },
+  "status": 200,
+  "retrieved": "2026-09-08T19:11:57+00:00",
+  "trimmed": null,
+  "note": "Captured by precedent.devtools.capture_fixture. Trimmed fixtures are not byte-identical to the upstream response."
+}
