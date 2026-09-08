@@ -1,0 +1,66 @@
+# Pass-through entity aliases, committed and hand-maintained.
+#
+# `passthrough_name` on a Schedule of Expenditures of Federal Awards is free text an
+# auditee typed. Clustering it is required and will never be perfect, so this table is the
+# auditable part: everything in it was decided by a person, and everything not in it is
+# clustered by exact normalized match within one state and nothing else.
+#
+# Rules this table exists to enforce:
+#   - Initialisms are ONLY ever resolved here. No automatic rule may expand "ODA", because
+#     the same three letters are a different agency in another state, and a wrong merge
+#     states a fact that is not true.
+#   - `state` is required and clusters never cross it.
+#   - `ein` is null unless somebody verified it. A name match is not an identity match.
+#
+# Aliases are compared after `analysis.identity.normalize_name`, so legal suffixes, case,
+# punctuation and "&" are already handled; write them however the auditee typed them.
+#
+# Seeded from the Ohio aging entities in the README example, each observed in live FAC
+# data for Assistance Listing 93.045 (Special Programs for the Aging, Title III-C).
+
+- canonical: "OHIO DEPARTMENT OF AGING"
+  state: OH
+  entity_type: state_agency
+  ein: null
+  aliases:
+    - "OHIO DEPT OF AGING"
+    - "STATE OF OHIO DEPARTMENT OF AGING"
+    - "OHIO DEPARTMENT ON AGING"
+    - "ODA"
+    - "OHIO DEPARTMENT OF AGING (ODA)"
+
+- canonical: "BUCKEYE HILLS REGIONAL COUNCIL"
+  state: OH
+  entity_type: regional_council
+  ein: null
+  aliases:
+    - "BUCKEYE HILLS HOCKING VALLEY REGIONAL DEVELOPMENT DISTRICT"
+    - "BUCKEYE HILLS REGIONAL COUNCIL AREA AGENCY ON AGING 8"
+    - "BUCKEYE HILLS AREA AGENCY ON AGING"
+
+- canonical: "COUNCIL ON AGING OF SOUTHWESTERN OHIO"
+  state: OH
+  entity_type: nonprofit
+  ein: null
+  aliases:
+    - "COUNCIL ON AGING SOUTHWESTERN OHIO"
+    - "CINCINNATI COUNCIL OF AGING"
+    - "COUNCIL ON AGING OF SOUTHWESTERN OHIO AREA AGENCY ON AGING 1"
+
+- canonical: "AREA OFFICE ON AGING OF NORTHWESTERN OHIO"
+  state: OH
+  entity_type: nonprofit
+  ein: null
+  aliases:
+    - "AREA OFFICE ON AGING OF NORTHWEST OHIO"
+    - "AREA OFFICE ON AGING OF NORTHWEST OHIO, INC."
+    - "AREA AGENCY ON AGING 4"
+
+- canonical: "OHIO DISTRICT 5 AREA AGENCY ON AGING"
+  state: OH
+  entity_type: nonprofit
+  ein: null
+  aliases:
+    - "OHIO DISTRICT 5 AREA AGENCY ON AGING, INC."
+    - "DISTRICT 5 AREA AGENCY ON AGING"
+    - "AREA AGENCY ON AGING DISTRICT 5"

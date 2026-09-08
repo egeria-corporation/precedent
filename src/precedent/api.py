@@ -14,6 +14,7 @@ from datetime import datetime
 from typing import Any
 
 from precedent import DISCLOSURE
+from precedent.analysis.passthrough import PassthroughResult, build_passthrough
 from precedent.analysis.profile import (
     DEFAULT_LOOKBACK_YEARS,
     Profile,
@@ -25,6 +26,7 @@ from precedent.analysis.profile import (
 from precedent.cache import oldest
 from precedent.config import Config
 from precedent.http import HttpClient
+from precedent.sources.fac import Fac
 from precedent.sources.usaspending import (
     ProgramSearch,
     UsaSpending,
@@ -149,6 +151,101 @@ def award_history(
     return HistoryResult(
         profile=profile,
         provenance=Provenance(sources=["usaspending"], retrieved=oldest([retrieved])),
+    )
+
+
+@dataclass
+class PassthroughOutcome:
+    result: PassthroughResult
+    provenance: Provenance
+    disclosure: str = field(default=DISCLOSURE)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            **self.result.as_dict(),
+            "provenance": self.provenance.as_dict(),
+            "disclosure": self.disclosure,
+        }
+
+
+DEFAULT_PASSTHROUGH_YEARS = 5
+
+
+def passthrough(
+    state: str,
+    *,
+    program: str | None = None,
+    since_audit_year: int | None = None,
+    until_audit_year: int | None = None,
+    fuzzy: bool = False,
+    config: Config | None = None,
+    http: HttpClient | None = None,
+    no_cache: bool | None = None,
+) -> PassthroughOutcome:
+    """Who passes federal money down to organizations in one state.
+
+    Four requests per batch of audits, not one join: FAC asks partners for small restrictive
+    queries and its own documentation says to join client side. The two award pulls are
+    deliberately separate because they answer opposite questions - who funded these
+    auditees, and whom did these auditees fund - and a single pull filtered afterwards would
+    have to fetch the whole state's schedule to do it.
+    """
+    requested_since = since_audit_year
+    if since_audit_year is None or until_audit_year is None:
+        this_year = datetime.now().year
+        # Audits are filed months after a fiscal year ends, so the most recent year with
+        # meaningful coverage is behind the calendar.
+        until_audit_year = until_audit_year if until_audit_year is not None else this_year - 1
+        since_audit_year = (
+            since_audit_year
+            if since_audit_year is not None
+            else until_audit_year - DEFAULT_PASSTHROUGH_YEARS + 1
+        )
+
+    config = config or Config.from_env()
+    owned = http is None
+    client = http or HttpClient(config)
+    try:
+        fac = Fac(client)
+        audits, at_audits = fac.audits(
+            state=state,
+            since_year=since_audit_year,
+            until_year=until_audit_year,
+            no_cache=no_cache,
+        )
+        report_ids = [a.report_id for a in audits if a.report_id]
+        indirect, at_indirect = fac.sefa_awards(
+            listing=program,
+            report_ids=report_ids,
+            received_through_someone=True,
+            no_cache=no_cache,
+        )
+        named, at_named = fac.passthroughs(report_ids, no_cache=no_cache)
+        supply, at_supply = fac.sefa_awards(
+            listing=program,
+            report_ids=report_ids,
+            passed_money_down=True,
+            no_cache=no_cache,
+        )
+    finally:
+        if owned:
+            client.close()
+
+    retrieved = oldest([at_audits, at_indirect, at_named, at_supply])
+    result = build_passthrough(
+        state=state,
+        program=program,
+        audits=audits,
+        indirect_awards=indirect,
+        passthroughs=named,
+        supply_awards=supply,
+        retrieved=retrieved,
+        requested_since_year=requested_since,
+        fuzzy=fuzzy,
+    )
+    return PassthroughOutcome(
+        result=result,
+        provenance=Provenance(sources=["fac"], retrieved=retrieved),
     )
 
 

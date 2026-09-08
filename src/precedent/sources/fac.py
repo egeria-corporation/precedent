@@ -67,6 +67,11 @@ IN_CHUNK = 100
 # this API does not serve, so a window reaching before it is truncated and must say so.
 COVERAGE_START_YEAR = 2016
 
+# What the text "boolean" columns actually hold, and therefore what a filter has to compare
+# against. See the module docstring.
+TRUE_VALUE = "Y"
+FALSE_VALUE = "N"
+
 GENERAL_FIELDS = (
     "report_id",
     "audit_year",
@@ -395,10 +400,31 @@ class Fac:
         report_ids: Sequence[str] | None = None,
         since_year: int | None = None,
         until_year: int | None = None,
+        received_through_someone: bool = False,
+        passed_money_down: bool = False,
         no_cache: bool | None = None,
     ) -> tuple[list[SefaAward], datetime | None]:
-        """SEFA lines, filtered on both halves of the Assistance Listing number."""
+        """SEFA lines, filtered on both halves of the Assistance Listing number.
+
+        ``received_through_someone`` and ``passed_money_down`` are the two directions of
+        the same pipe and are never both true in one query: one asks who funded this
+        auditee, the other asks whom this auditee funded.
+        """
+        if received_through_someone and passed_money_down:
+            raise ValueError(
+                "received_through_someone and passed_money_down are opposite directions; "
+                "ask for one stream at a time"
+            )
         base = self._window(since_year=since_year, until_year=until_year)
+        # eq.N / eq.Y, not is.false / is.true. These columns are text in FAC's schema
+        # despite the data dictionary calling them boolean, and PostgREST rejects an IS
+        # predicate against text outright: HTTP 400, "argument of IS FALSE must be type
+        # boolean, not type text". The build prompt specifies the IS form; it does not work.
+        if received_through_someone:
+            base["is_direct"] = f"eq.{FALSE_VALUE}"
+        if passed_money_down:
+            base["is_passthrough_award"] = f"eq.{TRUE_VALUE}"
+            base["passthrough_amount"] = "gt.0"
         if listing:
             prefix, extension = split_listing(listing)
             base["federal_agency_prefix"] = f"eq.{prefix}"

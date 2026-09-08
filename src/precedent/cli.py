@@ -102,6 +102,74 @@ def history(
     _emit(render_history(result))
 
 
+@main.command("passthrough")
+@click.option("--state", required=True, help="Two-letter state code, e.g. OH. Required.")
+@click.option("--program", default=None, help="Assistance Listing number, e.g. 93.045.")
+@click.option("--since", type=int, default=None, help="First audit year. Default: five back.")
+@click.option("--until", type=int, default=None, help="Last audit year. Default: last year.")
+@click.option(
+    "--fuzzy",
+    is_flag=True,
+    help="Also merge near-identical names. Off by default; a wrong merge states a falsehood.",
+)
+@click.option(
+    "--show-name-variants",
+    is_flag=True,
+    help="Print every raw spelling merged into each cluster. Always in --json.",
+)
+@click.option("--json", "as_json", is_flag=True, help="Machine-readable output.")
+@click.option("--no-cache", is_flag=True, help="Ignore anything already cached.")
+def passthrough_cmd(
+    state: str,
+    program: str | None,
+    since: int | None,
+    until: int | None,
+    fuzzy: bool,
+    show_name_variants: bool,
+    as_json: bool,
+    no_cache: bool,
+) -> None:
+    """Who passes federal money down to organizations in one state.
+
+    
+      precedent passthrough --state OH --program 93.045
+      precedent passthrough --state OH --show-name-variants
+      precedent passthrough --state CA --program 93.243 --json
+
+    Needs a free Federal Audit Clearinghouse key in FAC_API_KEY. Every count is a floor:
+    organizations under the single audit threshold file nothing and are absent entirely.
+    """
+    import json as jsonlib
+
+    from precedent.api import passthrough as run_passthrough
+    from precedent.config import Config
+    from precedent.errors import PrecedentError
+    from precedent.http import HttpClient
+    from precedent.render import render_passthrough
+
+    config = Config.from_env()
+    try:
+        with HttpClient(config) as http:
+            outcome = run_passthrough(
+                state,
+                program=program,
+                since_audit_year=since,
+                until_audit_year=until,
+                fuzzy=fuzzy,
+                config=config,
+                http=http,
+                no_cache=no_cache or None,
+            )
+    except PrecedentError as error:
+        _emit(f"STOP: {error}")
+        sys.exit(4)
+
+    if as_json:
+        _emit(jsonlib.dumps(outcome.as_dict(), indent=2, default=str))
+        return
+    _emit(render_passthrough(outcome, show_name_variants=show_name_variants))
+
+
 @main.command("programs")
 @click.argument("search_text")
 @click.option("--limit", default=20, show_default=True, help="How many listings to return.")

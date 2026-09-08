@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from precedent import DISCLOSURE
 from precedent.analysis.profile import Profile
-from precedent.api import HistoryResult
+from precedent.api import HistoryResult, PassthroughOutcome
 
 RULE = "-" * 78
 
@@ -108,3 +108,86 @@ def render_history(result: HistoryResult) -> str:
     )
     add(DISCLOSURE)
     return "\n".join(out)
+
+
+def render_passthrough(outcome: PassthroughOutcome, *, show_name_variants: bool = False) -> str:
+    """The pass-through answer, with the coverage qualification attached rather than footnoted.
+
+    The threshold note is printed in full and not summarised. A reader who takes a
+    subrecipient count from this output and treats it as a total will be wrong by however
+    many organizations spend under the single audit threshold, which is most of them.
+    """
+    r = outcome.result
+    c = r.coverage
+    out: list[str] = []
+    add = out.append
+
+    scope = f"{r.state}" + (f", Assistance Listing {r.program}" if r.program else ", all programs")
+    add(f"Federal pass-through funders in {scope}")
+    add(RULE)
+    add("")
+    years = f"FY{c.audit_years[0]}-FY{c.audit_years[-1]}" if c.audit_years else "no audit years"
+    add(f"{c.audits_scanned:,} single audits scanned, {years}.")
+    add("")
+
+    if not r.intermediaries:
+        add("No organization in this state reported receiving money through a pass-through")
+        add("entity under this filter. That is not the same as nobody doing it: see below.")
+        add("")
+    else:
+        add("WHO PASSES MONEY DOWN TO ORGANIZATIONS HERE")
+        add("  Ranked by how many distinct organizations name them, not by dollars: the")
+        add("  question is who makes subawards to organizations like yours.")
+        add("")
+        for e in r.intermediaries:
+            orgs = f"{e.subrecipient_count} org{'' if e.subrecipient_count == 1 else 's'}"
+            add(f"  {orgs:<9} {money(e.amount_expended_total):>14}   {e.canonical_name}")
+            marks = []
+            if e.ein:
+                marks.append(f"EIN {e.ein} ({e.identifier_source.replace('_', ' ')})")
+            if e.entity_type:
+                marks.append(e.entity_type.replace("_", " "))
+            marks.append(
+                f"seen in {e.observation_count} audit{'' if e.observation_count == 1 else 's'}"
+            )
+            if e.from_alias_table:
+                marks.append("name from the alias table")
+            if e.merged_by_fuzzy:
+                marks.append(f"--fuzzy merged {len(e.merged_by_fuzzy)}")
+            add(f"            {'; '.join(marks)}")
+            if e.programs:
+                add("            " + ", ".join(f"{p} x{n}" for p, n in e.programs[:5]))
+            if show_name_variants and len(e.name_variants) > 1:
+                add(f"            {len(e.name_variants)} spellings on the schedules:")
+                for v in e.name_variants:
+                    add(f"              {v.count:>3}  {v.raw}   ({v.example_report_id})")
+        add("")
+
+    if r.suppliers:
+        add("ORGANIZATIONS HERE THAT REPORT PASSING MONEY DOWN")
+        add("  Their own audits, so these carry a real EIN and a real city.")
+        add("")
+        for s in r.suppliers[:15]:
+            add(f"  {money(s.passthrough_amount_total):>14}   {s.name}")
+            bits = [b for b in (s.ein and f"EIN {s.ein}", s.city, s.entity_type) if b]
+            add(f"            {'; '.join(bits)}")
+        add("")
+
+    add("READ THIS BEFORE QUOTING ANY COUNT ABOVE")
+    for line in _wrap(c.threshold_note):
+        add(f"  {line}")
+    for note in c.notes:
+        add("")
+        for line in _wrap(note):
+            add(f"  {line}")
+    add("")
+    add(f"Source: Federal Audit Clearinghouse, retrieved {c.fac_retrieved or 'unknown'}.")
+    add(f"{c.fac_data_vintage_note}. Coverage begins with audit year {c.fac_earliest_audit_year}.")
+    add(DISCLOSURE)
+    return "\n".join(out)
+
+
+def _wrap(text: str, width: int = 76) -> list[str]:
+    import textwrap
+
+    return textwrap.wrap(text, width=width)
