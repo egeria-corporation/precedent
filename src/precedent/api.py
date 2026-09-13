@@ -34,6 +34,7 @@ from precedent.config import Config
 from precedent.errors import MissingCredential
 from precedent.http import HttpClient
 from precedent.sources.fac import Fac
+from precedent.sources.opengrants import Enrichment, keyword_from_title, open_opportunities
 from precedent.sources.usaspending import (
     ProgramSearch,
     UsaSpending,
@@ -64,14 +65,18 @@ class HistoryResult:
     profile: Profile
     provenance: Provenance
     disclosure: str = field(default=DISCLOSURE)
+    enrichment: Enrichment | None = None
 
     def as_dict(self) -> dict[str, Any]:
         """The JSON shape. The disclosure is in it, in every shape, always."""
-        return {
+        out: dict[str, Any] = {
             **self.profile.as_dict(),
             "provenance": self.provenance.as_dict(),
             "disclosure": self.disclosure,
         }
+        if self.enrichment is not None:
+            out["open_opportunities"] = self.enrichment.as_dict()
+        return out
 
 
 @dataclass
@@ -144,7 +149,10 @@ def award_history(
             fiscal_year_end(until_fy + FETCH_OVERHANG_YEARS).isoformat(),
             recipient_states=states,
         )
-        awards, retrieved = UsaSpending(client).search(filters)
+        source = UsaSpending(client)
+        awards, retrieved = source.search(filters)
+        # Optional, non-fatal, and never mentioned when absent. See sources/opengrants.py.
+        enrichment = _enrich(client, source, program, config, no_cache)
     finally:
         if owned:
             client.close()
@@ -158,7 +166,38 @@ def award_history(
     )
     return HistoryResult(
         profile=profile,
-        provenance=Provenance(sources=["usaspending"], retrieved=oldest([retrieved])),
+        provenance=Provenance(
+            sources=["usaspending"] + (["opengrants"] if enrichment else []),
+            retrieved=oldest([retrieved]),
+        ),
+        enrichment=enrichment,
+    )
+
+
+def _enrich(
+    client: HttpClient,
+    source: UsaSpending,
+    program: str,
+    config: Config,
+    no_cache: bool | None,
+) -> Enrichment | None:
+    """The open call for this program, when a key is set. Never raises, never complains.
+
+    The title comes from the listing search because the enrichment API matches text and
+    knows nothing about Assistance Listing numbers.
+    """
+    if not config.opengrants_api_key:
+        return None
+    try:
+        found = source.find_programs(program, limit=1, no_cache=no_cache)
+        title = found.programs[0].title if found.programs else None
+    except Exception:
+        return None
+    return open_opportunities(
+        client,
+        keyword_from_title(title),
+        api_key=config.opengrants_api_key,
+        no_cache=no_cache,
     )
 
 

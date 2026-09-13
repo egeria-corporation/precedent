@@ -94,6 +94,25 @@ def render_history(result: HistoryResult) -> str:
             add(f"  - {caveat}")
         add("")
 
+    if result.enrichment and result.enrichment.opportunities:
+        add("OPEN NOW")
+        for opp in result.enrichment.opportunities:
+            add(f"  {opp.label}")
+            bits = [
+                b
+                for b in (
+                    opp.funder,
+                    opp.close_date and f"closes {opp.close_date}",
+                    opp.amount and str(opp.amount),
+                )
+                if b
+            ]
+            if bits:
+                add(f"      {'; '.join(bits)}")
+            if opp.url:
+                add(f"      {opp.url}")
+        add("")
+
     resolution = ", ".join(f"{k} {v:.0%}" for k, v in sorted(p.identity_resolution.items()))
     add(f"Recipients were matched by: {resolution}.")
     if p.excluded.missing_date or p.excluded.nonpositive_amount:

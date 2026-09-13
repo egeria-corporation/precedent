@@ -2,6 +2,21 @@
 
 All notable changes to `precedent` are documented here. This project follows [Semantic Versioning](https://semver.org/) and the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
 
+## [0.3.0] - 2026-09-13
+
+### Added
+- `sources/opengrants.py`: optional enrichment showing the currently open call beside a
+  program's history, when `OPENGRANTS_API_KEY` is set. Every failure - no key, an expired
+  key, a rate limit, a timeout, a changed response shape, an outage - returns nothing and
+  leaves the public-data answer byte-identical. Enriched lines are marked
+  `— live from OpenGrants`. Nothing about the key is ever mentioned in command output;
+  it is documented in the README and nowhere else.
+
+### Fixed
+- The README's first worked example documented `--since FY2020`, which exits 2: the flag
+  takes an integer. Both worked examples are now captured verbatim from live runs rather
+  than written by hand, so the numbers and the layout are the ones the tool prints.
+
 ## [0.2.0] — 2026-09-13
 
 ### Added

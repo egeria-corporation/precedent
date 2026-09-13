@@ -130,169 +130,114 @@ Regional and National Significance.** Awarding agency: Department of Health and 
 Services, Substance Abuse and Mental Health Services Administration.
 
 ```
-$ uvx federal-precedent history 93.243 --since FY2020 --until FY2024
+$ uvx federal-precedent history 93.243 --since 2020 --until 2024
 ```
 
 ```
-93.243  Substance Abuse and Mental Health Services Projects of Regional and
-        National Significance
-        Department of Health and Human Services / SAMHSA
-        Assistance awards with a base obligation date in FY2020-FY2024
+Assistance Listing 93.243, FY2020 through FY2024
+------------------------------------------------------------------------------
 
-  1,058 awards to 726 distinct recipients          $3,570,889,654 obligated
+NEW-ENTRANT RATE  39.7%
+  288 of 725 recipients in FY2020-FY2024 had won no award under this program in the FY2015-FY2019 lookback.
 
-  NEW-ENTRANT RATE                                              39.1%
-  284 of 726 recipients in FY2020-FY2024 had won no award under this
-  program in the FY2015-FY2019 lookback window.
+1,056 awards to 725 distinct recipients, $3,565,889,654 obligated.
+Repeat winners: 207 of 725 (28.6%) won more than once in the window.
+The top 10 recipients hold 48.2% of the dollars.
 
-  Award size
-    minimum                                                      $397
-    25th percentile                                          $186,013
-    MEDIAN                                                   $305,161
-    75th percentile                                          $854,761
-    90th percentile                                        $2,615,811
-    maximum                                              $205,604,128
-    mean                                                   $3,375,132   (skewed)
+AWARD SIZE  (total obligated over the life of each award, not per year)
+  median $305,040    mean $3,376,789  (skewed by large awards)
+  p10 $94,438   p25 $185,956   p75 $854,674   p90 $2,590,154
+  range $397 to $205,604,128 across 1,056 awards
 
-  Distribution
-    under $100k        153  ###############                      14.5%
-    $100k - $250k      287  ############################         27.1%
-    $250k - $500k      221  #####################                20.9%
-    $500k - $1M        164  ################                     15.5%
-    $1M - $5M          162  ################                     15.3%
-    $5M and over        71  #######                               6.7%
+  under_100k 153 (14%)  100k_250k 287 (27%)  250k_500k 221 (21%)  500k_1m 164 (16%)  1m_5m 160 (15%)  5m_plus 71 (7%)
 
-  Repeat winners                                                 28.7%
-  208 of 726 recipients took 2 or more awards inside the window.
-  Top 10 recipients by dollars hold 48.1% of all dollars obligated.
+TOP RECIPIENTS BY DOLLARS
+      $322,895,770  6 awards     THE MENTAL HEALTH ASSOCIATION OF NEW YORK CITY, INC.
+      $220,092,263  2 awards     HEALTH CARE SERVICES, CALIFORNIA DEPARTMENT OF
+      $218,976,104  3 awards     HEALTH & HUMAN SVC COMMN TX
+      $193,295,399  2 awards     OHIO DEPARTMENT MENTAL HEALTH
+      $176,908,364  2 awards     FLORIDA DEPARTMENT OF CHILDREN AND FAMILIES
+      $159,645,496  1 award      PENNSYLVANIA DEPARTMENT OF DRUG AND ALCOHOL PROGRAMS
+      $119,688,912  3 awards     RESEARCH FOUNDATION FOR MENTAL HYGIENE, INC.
+      $117,821,539  5 awards     HUMAN SERVICES, NEW JERSEY DEPARTMENT OF
+      $102,940,627  2 awards     DEPARTMENT OF BEHAVIORAL HEALTH & DEVELOPMENTAL SERVICES
+       $86,667,882  3 awards     HEALTH AND HUMAN RESOURCES, WEST VIRGINIA DEPARTMENT OF
 
-  Geography          57 place-of-performance state and territory codes
-    CA 85    AK 79    OK 67    NY 58    WI 40    MI 39    MT 31    SD 30
+GEOGRAPHY  57 states or territories
+  CA 85, AK 79, OK 67, NY 57, WI 40, MI 39, MT 31, SD 30, AZ 29, FL 27
 
-  Most frequent recipients
-    Great Plains Tribal Leaders Health Board          7 awards    $7,634,611
-    The Mental Health Association of New York City    6 awards  $322,895,770
-    New Jersey Department of Human Services           5 awards  $117,821,539
-    MaineHealth                                       5 awards    $1,817,853
+READ THIS BEFORE QUOTING ANY OF THE ABOVE
+  - 24% of awards are reported under more than one Assistance Listing. Award amounts include money from those other programs, so the size percentiles are an upper bound.
+  - The mean award is more than twice the median, so a few large awards are pulling it upward. The median is the better guide to a typical award.
 
-  Caveats for this program
-    256 of 1,058 awards (24.2%) report more than one Assistance Listing, so
-    the dollar figures include money that is not 93.243. Treat award-size
-    percentiles for this program as an upper bound.
+Recipients were matched by: uei 100%.
+Excluded: 0 undated, 1086 with no positive amount.
 
-  Source: USAspending API, POST /api/v2/search/spending_by_award, retrieved
-  2026-08-30. Award amounts are total obligations across the life of each
-  award, not fiscal-year outlays.
-
-  This is informational only, derived from public data on the dates shown. It
-  is not an eligibility determination, and not legal, tax, or accounting
-  advice. Verify against the official source before relying on it.
+Source: USAspending, retrieved 2026-09-13.
+This is informational only, derived from public data on the dates shown. It is not an eligibility determination, and not legal, tax, or accounting advice. Verify against the official source before relying on it.
 ```
 
-Those figures are real. They were computed against the live USAspending API on 2026-08-30
-and the command above reproduces them, subject to the small drift that comes from USAspending
-restating prior-year records.
-
-**What a consultant does with this.** A median of $305,161 with 41.6% of awards under
-$250,000 means a mid-sized community organization is inside the size band. A new-entrant
-rate of 39.1% means this program genuinely takes newcomers, which is the opposite of what
-the presence of $205 million awards at the top of the range would suggest on its own. The
-new-entrant rate is the number that changes the advice, which is why it is the headline
-and not a footnote.
+Captured from a live run on 2026-09-13. USAspending restates prior-period records, so a
+run today may differ slightly; the retrieval date in the footer is the one that matters.
+The headline is a sentence rather than a bare percentage, because "39.7%" invites a
+reader to supply their own meaning and "288 of 725 recipients had won nothing under this
+program in the five years before" does not.
 
 ---
 
 ## Worked example 2: pass-through finder
 
-**State: Ohio. Assistance Listing 93.045, Special Programs for the Aging, Title III,
-Part C, Nutrition Services.** This is a program almost no community organization receives
-directly. Federal money goes from the Administration for Community Living to the state
-unit on aging, which subawards to regional area agencies on aging, which subaward again to
-local senior centers and meal providers.
+**Who actually hands Older Americans Act nutrition money to organizations in Ohio.**
+USAspending shows the award to the state; the organizations it re-grants to appear only
+in single audits, where each subrecipient's own auditor names who passed the money down.
 
 ```
-$ export FAC_API_KEY="..."
-$ uvx federal-precedent passthrough --state OH --program 93.045
+$ uvx federal-precedent passthrough --state OH --program 93.045 --since 2022 --until 2023
 ```
 
-> **The output below is illustrative.** The structure it shows is real and verifiable:
-> Ohio's federal aging nutrition money does move through the Ohio Department of Aging to
-> regional area agencies on aging, and the organizations named are real Ohio area agencies
-> on aging. The dollar figures and counts are shaped from typical Schedule of Expenditures
-> of Federal Awards magnitudes rather than pulled live, because the pass-through query
-> needs an API key. Run the command to get current figures.
-
 ```
-93.045  Special Programs for the Aging, Title III, Part C, Nutrition Services
-        Pass-through entities reaching organizations in OHIO
-        Audit years 2019-2024, 1,214 Ohio single audits scanned
+Federal pass-through funders in OH, Assistance Listing 93.045
+------------------------------------------------------------------------------
 
-  WHO PASSES THIS MONEY DOWN
-  Ranked by the number of distinct Ohio organizations that named this entity
-  as their pass-through entity in their own single audit.
+4,945 single audits scanned, FY2022-FY2023.
 
-  1. Ohio Department of Aging                            state agency
-     named by 11 Ohio subrecipients      $41.2M expended through it
-     also passes: 93.044, 93.052, 93.053, 10.561
-     -> this is the state unit on aging; it is the top of the Ohio chain
+WHO PASSES MONEY DOWN TO ORGANIZATIONS HERE
+  Ranked by how many distinct organizations name them, not by dollars: the
+  question is who makes subawards to organizations like yours.
 
-  2. Council on Aging of Southwestern Ohio               nonprofit, Blue Ash OH
-     named by 9 Ohio subrecipients        $8.7M expended through it
-     EIN 31-0896213   passes down 93.045, 93.044, 93.052
-     -> funders.opengrants.io/funders/31-0896213
+  18 orgs      $66,099,231   OHIO DEPARTMENT OF AGING
+            state agency; seen in 30 audits; name from the alias table
+            93.045 x113
+  5 orgs        $1,828,239   COUNCIL ON AGING OF SOUTHWESTERN OHIO
+            EIN 310807186 (supply side match); nonprofit; seen in 8 audits; name from the alias table
+            93.045 x11
+  5 orgs          $615,275   Western Reserve Area Agency on Aging
+            EIN 341620774 (supply side match); non-profit; seen in 8 audits
+            93.045 x12
+  4 orgs        $1,385,258   Area Agency on Aging District 7, Inc.
+            EIN 310971399 (supply side match); non-profit; seen in 7 audits
+            93.045 x19
+  3 orgs          $723,466   AREA OFFICE ON AGING OF NORTHWESTERN OHIO
 
-  3. Western Reserve Area Agency on Aging                nonprofit, Cleveland OH
-     named by 7 Ohio subrecipients        $6.1M expended through it
+  ... 96 further lines of intermediaries ...
 
-  4. Area Office on Aging of Northwestern Ohio, Inc.     nonprofit, Toledo OH
-     named by 5 Ohio subrecipients        $3.9M expended through it
+READ THIS BEFORE QUOTING ANY COUNT ABOVE
+  Single audits are only filed by organizations that expend at or above the
+  federal single audit threshold in a fiscal year. That threshold was $750,000
+  and rose to $1,000,000 for fiscal years beginning on or after 2024-10-01.
+  Organizations below the threshold file nothing, so they are absent from this
+  data entirely, not counted as zero. This list is therefore skewed toward
+  larger recipients and larger intermediaries, and every subrecipient count is
+  a floor rather than a total.
 
-  5. Central Ohio Area Agency on Aging                   public, Columbus OH
-     named by 4 Ohio subrecipients        $3.4M expended through it
-
-  OHIO ENTITIES REPORTING THEY PASSED 93.045 MONEY DOWN
-  From SEFA lines where the auditee marked the award as passed through to
-  subrecipients, ranked by reported pass-through amount.
-
-    Ohio Department of Aging                             $39,800,000
-    Council on Aging of Southwestern Ohio                 $7,900,000
-    Direction Home Akron Canton Area Agency on Aging      $4,600,000
-    Ohio District 5 Area Agency on Aging                  $2,100,000
-
-  COVERAGE WARNING  read this before you use the list above
-    Single audits are only filed by organizations that expend at or above the
-    federal single audit threshold in a fiscal year. That threshold was
-    $750,000 and rose to $1,000,000 for fiscal years beginning on or after
-    2024-10-01. Organizations below the threshold file nothing, so they are
-    absent from this data entirely, not counted as zero.
-
-    That means this list is skewed toward larger recipients and larger
-    intermediaries, and the subrecipient counts are a floor, not a total. An
-    intermediary "named by 4 subrecipients" is named by 4 subrecipients that
-    were themselves large enough to file. It may have fifty more.
-
-    Pass-through entity names in this data are free text typed by the
-    auditee. precedent normalizes and clusters them; run with
-    --show-name-variants to see exactly which raw strings were merged.
-
-    Amounts are federal expenditures in the audited fiscal year, not award
-    amounts and not the year the award was made.
-
-  Source: Federal Audit Clearinghouse API, general / federal_awards /
-  passthrough endpoints, retrieved 2026-08-30. FAC production data refreshes
-  weekly, typically Wednesdays, and covers audit years 2016 forward.
-
-  This is informational only, derived from public data on the dates shown. It
-  is not an eligibility determination, and not legal, tax, or accounting
-  advice. Verify against the official source before relying on it.
+Source: Federal Audit Clearinghouse, retrieved 2026-09-08.
+FAC production refreshes weekly, typically Wednesdays. Coverage begins with audit year 2016.
+This is informational only, derived from public data on the dates shown. It is not an eligibility determination, and not legal, tax, or accounting advice. Verify against the official source before relying on it.
 ```
 
-**What a consultant does with this.** The client was never going to win 93.045 from the
-Administration for Community Living. The five organizations at the top of that list are the
-actual funders in their world, they are reachable by phone, they have subrecipient
-procurement processes, and no subscription product this client's consultant is paying for
-lists them.
-
+Needs a free `FAC_API_KEY`. Every count above is a floor rather than a total, for the
+reason the output states in full: organizations below the single audit threshold file
+nothing at all, so they are absent from this data rather than counted as zero.
 ---
 
 ## What it computes, and exactly how
