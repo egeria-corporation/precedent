@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from factories import audit, named, sefa
 
 from precedent.analysis.recipient import (
     build_recipient_profile,
@@ -11,7 +12,6 @@ from precedent.analysis.recipient import (
     summarize_funders,
 )
 from precedent.sources.fac import UEI_PLACEHOLDER, to_audit, to_passthrough, to_sefa_award
-from tests.test_passthrough import audit, named, sefa
 
 
 class TestClassifyIdentifier:
@@ -127,16 +127,13 @@ class TestProfileHonesty:
     def test_no_direct_awards_beside_named_funders_is_the_finding_not_a_gap(self) -> None:
         # The bridge worked and USAspending simply has nothing: this organization is funded
         # through intermediaries. Reporting that as a gap would bury the answer.
-        found = audit("r1", ein="541939556", name="Feeding Southwest Virginia")
-        found = type(found)(**{**found.__dict__, "auditee_uei": "KNY3ET8DBBB8"})
+        found = audit("r1", ein="541939556", name="Feeding Southwest Virginia", uei="KNY3ET8DBBB8")
         p = self.profile(audits=[found])
         assert any("funded through intermediaries" in c for c in p.caveats)
         assert p.resolved_uei == "KNY3ET8DBBB8"
 
     def test_a_failed_bridge_says_the_lookup_never_happened(self) -> None:
-        without_uei = audit("r1", ein="541939556")
-        without_uei = type(without_uei)(**{**without_uei.__dict__, "auditee_uei": None})
-        p = self.profile(audits=[without_uei])
+        p = self.profile(audits=[audit("r1", ein="541939556", uei=None)])
         assert any("could not be checked at all" in c for c in p.caveats)
 
     def test_two_ueis_in_one_answer_means_two_organizations(self) -> None:
