@@ -16,8 +16,10 @@ import { Hono } from "hono";
 import { SCHEMA_VERSION, buildProfile } from "./analysis/profile";
 import { readVintage, withPageCache } from "./cache";
 import { DISCLOSURE } from "./content";
+import { renderToHtml, renderUnavailable } from "./render/html";
+import { ProgramPage } from "./render/program";
 import { canonicalAln, defaultWindow } from "./routing";
-import { TooMuchData, buildFilters, search } from "./sources/usaspending";
+import { TooMuchData, buildFilters, findPrograms, search } from "./sources/usaspending";
 import type { Env } from "./types";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -93,6 +95,91 @@ app.get("/api/programs/:aln{.+\\.json}", async (c) => {
     }
     throw error;
   }
+});
+
+/**
+ * One program, computed and rendered at the edge.
+ *
+ * Everything a reader or a crawler needs is in this response. There is no client-side fetch
+ * for primary content, because a number nobody can read without running JavaScript is a
+ * number that will not be cited.
+ */
+app.get("/programs/:aln", async (c) => {
+  const raw = c.req.param("aln");
+  const aln = canonicalAln(raw);
+  if (!aln) return c.notFound();
+  // Never two URLs for one program. 93243, cfda/93.243 and title slugs all land here and
+  // are redirected permanently rather than rendering their own copy of the page.
+  if (aln !== raw) return c.redirect(`/programs/${aln}`, 301);
+
+  return withPageCache(c.req.raw, c.executionCtx, c.env, async () => {
+    const vintage = await readVintage(c.env);
+    const [sinceFy, untilFy] = defaultWindow();
+    const lookbackYears = 5;
+    const filters = buildFilters(
+      aln,
+      `${sinceFy - lookbackYears - 1}-10-01`,
+      `${untilFy + 1}-09-30`,
+    );
+
+    let awards: Awaited<ReturnType<typeof search>>;
+    try {
+      awards = await search(c.env, vintage, filters);
+    } catch (error) {
+      const detail =
+        error instanceof TooMuchData
+          ? error.message
+          : "USAspending did not answer. The figures for this program are temporarily unavailable.";
+      return { html: renderUnavailable(c.env.SITE_ORIGIN, aln, detail), status: 503 };
+    }
+    if (awards.truncated) {
+      return {
+        html: renderUnavailable(
+          c.env.SITE_ORIGIN,
+          aln,
+          "This program has more awards than can be fetched in one edge request. A partial " +
+            "pull would bias every statistic upward, because the upstream sorts by award " +
+            "amount descending and the smallest awards are the ones that fall off the end. " +
+            "No figures are shown rather than wrong ones.",
+        ),
+        status: 503,
+      };
+    }
+
+    const profile = buildProfile(awards.awards, { program: aln, sinceFy, untilFy, lookbackYears });
+    // The title and agency are cosmetic, so a failure to look them up must not cost the page.
+    let title: string | null = null;
+    try {
+      const found = await findPrograms(c.env, vintage, aln, 1);
+      title = found.programs[0]?.title ?? null;
+    } catch {
+      title = null;
+    }
+    const agency = awards.awards.find((a) => a.awardingAgency)?.awardingAgency ?? null;
+
+    return {
+      html: renderToHtml(
+        <ProgramPage
+          origin={c.env.SITE_ORIGIN}
+          profile={profile}
+          title={title}
+          agency={agency}
+          retrieved={awards.fetchedAt}
+          vintage={vintage}
+        />,
+      ),
+    };
+  });
+});
+
+/** `/programs/93.243/oh` and the other variants that must not become second URLs. */
+app.get("/cfda/:aln", (c) => {
+  const aln = canonicalAln(c.req.param("aln"));
+  return aln ? c.redirect(`/programs/${aln}`, 301) : c.notFound();
+});
+app.get("/programs/cfda/:aln", (c) => {
+  const aln = canonicalAln(c.req.param("aln"));
+  return aln ? c.redirect(`/programs/${aln}`, 301) : c.notFound();
 });
 
 app.get("/", async (c) =>
