@@ -1,0 +1,19 @@
+# pnpm 11 refuses to run a dependency's install scripts unless they are allowed here, and
+# treats the refusal as a hard error - so `pnpm install` fails, and with it every script that
+# triggers an install check, including `pnpm run deploy`.
+#
+# These three genuinely need their build scripts:
+#   workerd  - the Workers runtime itself; wrangler cannot run or deploy without its binary
+#   esbuild  - bundles the Worker; ships a platform-specific binary
+#   biome    - the linter and formatter; same
+#
+# Declared here rather than approved per-machine with `pnpm approve-builds`, so CI and any
+# fresh checkout work without anyone rediscovering this.
+#
+# The key is `allowBuilds`, a map. pnpm 11 no longer honours the `onlyBuiltDependencies`
+# list that earlier versions used, nor package.json's "pnpm" field; it ignores both in
+# silence and fails the install anyway, which is a confusing way to spend twenty minutes.
+allowBuilds:
+  '@biomejs/biome': true
+  esbuild: true
+  workerd: true

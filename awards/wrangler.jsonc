@@ -1,0 +1,52 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "awards-opengrants-io",
+  "main": "src/index.tsx",
+  "compatibility_date": "2026-01-01",
+
+  // Invocation logs OFF. A request URL here is a record of which program or which state's
+  // pass-through funders somebody looked up, which is a research interest worth keeping
+  // private by default. Custom logs still work, so a console.error on a failed upstream
+  // fetch is still visible; what is given up is per-request debugging, which `wrangler
+  // tail` buys back temporarily when it is genuinely needed.
+  "observability": {
+    "enabled": true,
+    "logs": { "invocation_logs": false }
+  },
+
+  // Edge SSR over cached upstream responses. No D1: precedent has no bulk dataset behind
+  // it, and inventing a warehouse it does not need would be the wrong shape. If a query
+  // cannot be served from cached upstream responses, the answer is a precomputed artifact
+  // in R2 - and that is a decision to bring to a human, not to make here.
+  "kv_namespaces": [
+    {
+      // Two jobs in one namespace, separated by key prefix: `u:` holds upstream responses,
+      // `meta:` holds the vintage pointer that every cache key on both layers includes.
+      "binding": "CACHE",
+      "id": "PLACEHOLDER_CREATE_WITH_WRANGLER_KV_NAMESPACE_CREATE"
+    }
+  ],
+
+  // Sitemap chunks only. R2 is never in the request path for a page render.
+  "r2_buckets": [
+    {
+      "binding": "ASSETS",
+      "bucket_name": "opengrants-data"
+    }
+  ],
+
+  "vars": {
+    "SITE_ORIGIN": "https://awards.opengrants.io",
+    // The prefix this site owns inside the shared public bucket.
+    "ASSET_PREFIX": "awards"
+  },
+
+  // Thursday 09:00 UTC. FAC production refreshes weekly and typically on Wednesdays, so
+  // this probes the day after rather than racing it.
+  "triggers": {
+    "crons": ["0 9 * * 4"]
+  }
+
+  // FAC_API_KEY and OPENGRANTS_API_KEY are set with `wrangler secret put`. They are never
+  // in this file and never in the repository.
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "organizeImports": { "enabled": true },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        // React needs keys so it can reconcile a virtual DOM across renders. Hono JSX
+        // renders to a string once, server-side; there is no reconciliation and no client
+        // runtime, so a key here is noise with no behaviour attached.
+        "useJsxKeyInIterable": "off"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    // The repository normalizes to LF (see .gitattributes); without this biome
+    // reformats every file on a Windows checkout and the diff is the whole tree.
+    "lineEnding": "lf",
+    "lineWidth": 100
+  },
+  "files": {
+    // test/fixtures holds captured upstream responses. They are data, not source:
+    // formatting them would break the byte-for-byte relationship with what the API
+    // actually returned, and the parity fixture is larger than biome will parse.
+    "ignore": ["node_modules", ".wrangler", "dist", "test/fixtures"]
+  }
+}
