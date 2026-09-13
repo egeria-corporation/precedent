@@ -213,6 +213,29 @@ def build_filters(
     return filters
 
 
+def build_recipient_filters(
+    identifier: str,
+    start_date: str,
+    end_date: str,
+) -> dict[str, Any]:
+    """The filter block for one recipient over one window.
+
+    ``recipient_search_text`` accepts a Unique Entity Identifier or a name. A name is
+    matched loosely - "FEEDING AMERICA" returns "FEEDING AMERICA EASTERN WISCONSIN, INC" -
+    so a caller passing a name is asking about whoever USAspending thinks that is, and the
+    profile has to say so rather than presenting the answer as though it were one
+    organization. An Employer Identification Number is not accepted here at all; that is
+    what the Federal Audit Clearinghouse is for.
+    """
+    return {
+        "award_type_codes": list(GRANT_AWARD_TYPES),
+        "recipient_search_text": [identifier.strip()],
+        "time_period": [
+            {"start_date": start_date, "end_date": end_date, "date_type": "action_date"}
+        ],
+    }
+
+
 class UsaSpending:
     """Fetches award history. Holds no statistics and no opinions about the data."""
 

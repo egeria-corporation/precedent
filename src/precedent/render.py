@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from precedent import DISCLOSURE
 from precedent.analysis.profile import Profile
-from precedent.api import HistoryResult, PassthroughOutcome
+from precedent.api import HistoryResult, PassthroughOutcome, RecipientOutcome
 
 RULE = "-" * 78
 
@@ -191,3 +191,67 @@ def _wrap(text: str, width: int = 76) -> list[str]:
     import textwrap
 
     return textwrap.wrap(text, width=width)
+
+
+def render_recipient(outcome: RecipientOutcome) -> str:
+    """One organization, with each source's silence labelled as silence rather than zero."""
+    p = outcome.profile
+    out: list[str] = []
+    add = out.append
+
+    add(f"{p.resolved_name or p.query}")
+    add(RULE)
+    add("")
+    ident = [
+        b
+        for b in (
+            p.resolved_uei and f"UEI {p.resolved_uei}",
+            p.resolved_ein and f"EIN {p.resolved_ein}",
+            p.audits and p.audits.entity_type,
+            p.audits and p.audits.city and f"{p.audits.city}, {p.audits.state}",
+        )
+        if b
+    ]
+    if ident:
+        add("  " + "  ".join(ident))
+    add(f"  searched as {p.identifier_kind}; answered from {', '.join(p.sources) or 'no source'}")
+    add("")
+
+    if p.audits:
+        a = p.audits
+        add("SINGLE AUDITS")
+        add(f"  {a.audit_count} on file, {a.audit_years[0]}-{a.audit_years[-1]}")
+        if a.latest_total_expended is not None:
+            add(f"  most recent year federal expenditures: {money(a.latest_total_expended)}")
+        if a.passes_money_down:
+            add(f"  passes money down to subrecipients: {money(a.passthrough_amount_total)}")
+        add("")
+
+    if p.funded_by:
+        add("FUNDED THROUGH  (named by this organization's own auditors)")
+        for name, amount in p.funded_by:
+            add(f"  {money(amount):>14}   {name}")
+        add("")
+
+    if p.awards:
+        w = p.awards
+        add("DIRECT FEDERAL AWARDS")
+        add(
+            f"  {w.award_count:,} awards, {money(w.total_obligated)} obligated, FY{w.first_fy}-FY{w.last_fy}"
+        )
+        if w.programs:
+            add("  " + ", ".join(f"{code} x{n}" for code, n in w.programs[:6]))
+        add("")
+
+    if p.caveats:
+        add("READ THIS BEFORE QUOTING ANY OF THE ABOVE")
+        for caveat in p.caveats:
+            for line in _wrap(caveat):
+                add(f"  {line}")
+            add("")
+
+    retrieved = outcome.provenance.retrieved
+    sources = " and ".join(p.sources) if p.sources else "no source"
+    add(f"Source: {sources}, retrieved {retrieved.date().isoformat() if retrieved else 'unknown'}.")
+    add(DISCLOSURE)
+    return "\n".join(out)

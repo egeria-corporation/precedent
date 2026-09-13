@@ -2,6 +2,29 @@
 
 All notable changes to `precedent` are documented here. This project follows [Semantic Versioning](https://semver.org/) and the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
 
+## [0.2.0] — 2026-09-13
+
+### Added
+- `precedent mcp`: the Model Context Protocol server over stdio, with `award_history`,
+  `passthrough_finder`, `recipient_profile` and `find_program`. Each returns exactly what
+  `--json` returns. Every tool *description* states that pass-through counts are floors and
+  that no output is an eligibility determination, because a model chooses a tool from its
+  description and may never read the coverage object in the reply.
+- `precedent recipient <UEI|EIN|name>` and `api.recipient_profile`: one organization across
+  both sources. USAspending has no Employer Identification Number field, so an EIN resolves
+  through a single audit first, and the audit supplies the Unique Entity Identifier that
+  opens USAspending. Works without a FAC key, with a caveat naming what is missing.
+
+### Fixed
+- `auditee_uei` is not always an identifier. Audits migrated from the legacy Census
+  collection carry the literal string `GSA_MIGRATION` in that column: 36,989 of 36,991
+  records in 2016 and 37,342 of 37,409 in 2019, against 0 in 2023. Read as a value it joins
+  tens of thousands of unrelated organizations to each other. It now parses to null, and a
+  UEI lookup that finds nothing says an EIN reaches further back.
+- Pass-through funders on a recipient profile are grouped on the normalized name. Auditors
+  retype the same agency in different case year to year, so grouping on the raw string
+  listed one funder several times with its money split between the spellings.
+
 ## [Unreleased]
 
 ### Added

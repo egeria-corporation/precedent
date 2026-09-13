@@ -77,8 +77,18 @@ export FAC_API_KEY="..."          # free, from https://www.fac.gov/api/signup/
 uvx federal-precedent passthrough --state OH --program 93.045
 ```
 
-An MCP server for Claude and other MCP clients is next on the roadmap and is not in this
-release. `precedent --help` lists what ships today.
+Look up one organization, by Unique Entity Identifier, Employer Identification Number, or
+name:
+
+```bash
+uvx federal-precedent recipient 54-1939556
+```
+
+Run it as an MCP server for Claude or any other MCP client:
+
+```bash
+uvx --from 'federal-precedent[mcp]' precedent mcp
+```
 
 ---
 
@@ -393,14 +403,21 @@ command still returns its full public-data result.
 
 ---
 
-## MCP server — planned, not in this release
+## MCP server
 
-The intent is to expose the same capabilities as Model Context Protocol tools for agent
-use: `award_history`, `passthrough_finder`, `recipient_profile`, `find_program`. The core
-logic already lives in the library precisely so the CLI and an MCP server can both be thin
-adapters over it, but the server itself is not written yet. It is not installed by this
-release and `precedent mcp` does not exist. When it lands it will be documented here with
-a version number.
+Four Model Context Protocol tools for agent use — `award_history`, `passthrough_finder`,
+`recipient_profile`, `find_program` — each returning exactly what `--json` returns, because
+the CLI and the server are both thin adapters over the same library. Shipped in 0.2.0.
+
+```bash
+uvx --from 'federal-precedent[mcp]' precedent mcp
+```
+
+Each tool's *description* carries the limitations, not only its payload. A model picks a
+tool by reading the description and may never open the `coverage` object it gets back, so
+the two facts that most change how an answer should be used — that pass-through counts are
+floors rather than totals, and that nothing here is an eligibility determination — are in
+the text the model reads before it decides anything.
 
 ---
 

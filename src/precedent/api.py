@@ -23,14 +23,22 @@ from precedent.analysis.profile import (
     fiscal_year_end,
     fiscal_year_start,
 )
+from precedent.analysis.recipient import (
+    RecipientProfile,
+    build_recipient_profile,
+    classify_identifier,
+    normalize_ein,
+)
 from precedent.cache import oldest
 from precedent.config import Config
+from precedent.errors import MissingCredential
 from precedent.http import HttpClient
 from precedent.sources.fac import Fac
 from precedent.sources.usaspending import (
     ProgramSearch,
     UsaSpending,
     build_filters,
+    build_recipient_filters,
 )
 
 # How far past the window to fetch. See award_history: action_date is not the cohort date.
@@ -246,6 +254,108 @@ def passthrough(
     return PassthroughOutcome(
         result=result,
         provenance=Provenance(sources=["fac"], retrieved=retrieved),
+    )
+
+
+@dataclass
+class RecipientOutcome:
+    profile: RecipientProfile
+    provenance: Provenance
+    disclosure: str = field(default=DISCLOSURE)
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            **self.profile.as_dict(),
+            "provenance": self.provenance.as_dict(),
+            "disclosure": self.disclosure,
+        }
+
+
+RECIPIENT_LOOKBACK_YEARS = 10
+RECIPIENT_AUDIT_YEARS = 6
+
+
+def recipient_profile(
+    identifier: str,
+    *,
+    config: Config | None = None,
+    http: HttpClient | None = None,
+    no_cache: bool | None = None,
+) -> RecipientOutcome:
+    """One organization, by Unique Entity Identifier, Employer Identification Number, or name.
+
+    The three identifiers do not reach the same places. USAspending has no EIN field, so an
+    EIN can only be resolved through a single audit - which then yields the Unique Entity
+    Identifier that opens USAspending. That bridge is why this asks FAC first for an EIN
+    rather than reporting nothing.
+
+    A missing FAC key is not an error here. `history` and `programs` need no key and this
+    should not either; it returns the USAspending half and says in a caveat what the other
+    half would have added.
+    """
+    kind = classify_identifier(identifier)
+    config = config or Config.from_env()
+    owned = http is None
+    client = http or HttpClient(config)
+
+    audits: list[Any] = []
+    sefa: list[Any] = []
+    named: list[Any] = []
+    awards: list[Any] = []
+    dates: list[datetime | None] = []
+    fac_available = bool(config.fac_api_key)
+
+    try:
+        if fac_available:
+            fac = Fac(client)
+            until = datetime.now().year - 1
+            since = until - RECIPIENT_AUDIT_YEARS + 1
+            audits, at = fac.audits(
+                ein=normalize_ein(identifier) if kind == "ein" else None,
+                uei=identifier if kind == "uei" else None,
+                name=identifier if kind == "name" else None,
+                since_year=since,
+                until_year=until,
+                no_cache=no_cache,
+            )
+            dates.append(at)
+            report_ids = [a.report_id for a in audits if a.report_id]
+            if report_ids:
+                sefa, at_s = fac.sefa_awards(report_ids=report_ids, no_cache=no_cache)
+                named, at_p = fac.passthroughs(report_ids, no_cache=no_cache)
+                dates += [at_s, at_p]
+
+        # An EIN cannot be sent to USAspending. If an audit supplied the Unique Entity
+        # Identifier, use that instead: crossing to FAC first is the whole point.
+        search_term = identifier
+        if kind == "ein":
+            search_term = next((a.auditee_uei for a in audits if a.auditee_uei), "")
+        if search_term:
+            today = datetime.now().date()
+            end = fiscal_year_end(fiscal_year(today))
+            start = fiscal_year_start(fiscal_year(today) - RECIPIENT_LOOKBACK_YEARS)
+            awards, at_a = UsaSpending(client).search(
+                build_recipient_filters(search_term, start.isoformat(), end.isoformat())
+            )
+            dates.append(at_a)
+    except MissingCredential:
+        fac_available = False
+    finally:
+        if owned:
+            client.close()
+
+    profile = build_recipient_profile(
+        query=identifier,
+        identifier_kind=kind,
+        awards=awards,
+        audits=audits,
+        sefa_awards=sefa,
+        passthroughs=named,
+        fac_available=fac_available,
+    )
+    return RecipientOutcome(
+        profile=profile,
+        provenance=Provenance(sources=profile.sources, retrieved=oldest(dates)),
     )
 
 

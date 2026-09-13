@@ -72,6 +72,15 @@ COVERAGE_START_YEAR = 2016
 TRUE_VALUE = "Y"
 FALSE_VALUE = "N"
 
+# `auditee_uei` is not always an identifier. Records migrated from the legacy Census
+# collection carry the literal string "GSA_MIGRATION" in that column: 36,989 of 36,991
+# audits in 2016 and 37,342 of 37,409 in 2019, against 1 in 2022 and 0 in 2023 (measured
+# 2026-09-13). Treated as a value it silently joins tens of thousands of unrelated
+# organizations to each other, so it is parsed to None and a UEI lookup is understood to
+# reach only the years after the migration.
+UEI_PLACEHOLDER = "GSA_MIGRATION"
+UEI_COVERAGE_FROM_YEAR = 2020
+
 GENERAL_FIELDS = (
     "report_id",
     "audit_year",
@@ -263,13 +272,19 @@ def _text(value: Any) -> str | None:
     return text or None
 
 
+def _uei(value: Any) -> str | None:
+    """A Unique Entity Identifier, or None for the migration placeholder."""
+    text = _text(value)
+    return None if text is None or text.upper() == UEI_PLACEHOLDER else text
+
+
 def to_audit(row: dict[str, Any]) -> Audit:
     return Audit(
         report_id=str(row.get("report_id") or ""),
         audit_year=_text(row.get("audit_year")),
         auditee_name=_text(row.get("auditee_name")),
         auditee_ein=_text(row.get("auditee_ein")),
-        auditee_uei=_text(row.get("auditee_uei")),
+        auditee_uei=_uei(row.get("auditee_uei")),
         auditee_city=_text(row.get("auditee_city")),
         auditee_state=_text(row.get("auditee_state")),
         entity_type=_text(row.get("entity_type")),
@@ -298,7 +313,7 @@ def to_sefa_award(row: dict[str, Any]) -> SefaAward:
         findings_count=_int(row.get("findings_count")),
         additional_award_identification=_text(row.get("additional_award_identification")),
         audit_year=_text(row.get("audit_year")),
-        auditee_uei=_text(row.get("auditee_uei")),
+        auditee_uei=_uei(row.get("auditee_uei")),
     )
 
 
@@ -309,7 +324,7 @@ def to_passthrough(row: dict[str, Any]) -> PassThrough:
         name=_text(row.get("passthrough_name")),
         identifier=_text(row.get("passthrough_id")),
         audit_year=_text(row.get("audit_year")),
-        auditee_uei=_text(row.get("auditee_uei")),
+        auditee_uei=_uei(row.get("auditee_uei")),
     )
 
 
@@ -379,14 +394,30 @@ class Fac:
         since_year: int | None = None,
         until_year: int | None = None,
         report_ids: Sequence[str] | None = None,
+        ein: str | None = None,
+        uei: str | None = None,
+        name: str | None = None,
         no_cache: bool | None = None,
     ) -> tuple[list[Audit], datetime | None]:
-        """Audit submissions, by state and year or by explicit report id."""
+        """Audit submissions, by state and year, by identity, or by explicit report id.
+
+        ``ein`` is the reason this endpoint matters for a recipient lookup: USAspending has
+        no Employer Identification Number field at all, and an audit carries both that and
+        the Unique Entity Identifier, so FAC is the bridge between the two datasets.
+        """
+        base = self._window(state=state, since_year=since_year, until_year=until_year)
+        if ein:
+            base["auditee_ein"] = f"eq.{ein.strip()}"
+        if uei:
+            base["auditee_uei"] = f"eq.{uei.strip().upper()}"
+        if name:
+            # Free text typed by a filer, so an exact match would miss almost everything.
+            base["auditee_name"] = "ilike.*" + name.strip().replace("*", "") + "*"
         rows, retrieved = self._collect(
             GENERAL_URL,
             select=GENERAL_FIELDS,
             order="report_id.asc",
-            base=self._window(state=state, since_year=since_year, until_year=until_year),
+            base=base,
             id_column="report_id",
             ids=report_ids,
             no_cache=no_cache,

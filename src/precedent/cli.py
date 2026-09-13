@@ -170,6 +170,68 @@ def passthrough_cmd(
     _emit(render_passthrough(outcome, show_name_variants=show_name_variants))
 
 
+@main.command("recipient")
+@click.argument("identifier")
+@click.option("--json", "as_json", is_flag=True, help="Machine-readable output.")
+@click.option("--no-cache", is_flag=True, help="Ignore anything already cached.")
+def recipient(identifier: str, as_json: bool, no_cache: bool) -> None:
+    """One organization, by UEI, EIN, or name.
+
+    
+      precedent recipient JE73CDQUAPA7
+      precedent recipient 54-1939556
+      precedent recipient "Feeding Southwest Virginia" --json
+
+    An EIN reaches further back than a UEI: audits migrated from the legacy collection
+    carry a placeholder in the UEI column. Works without a FAC key, with less in it.
+    """
+    import json as jsonlib
+
+    from precedent.api import recipient_profile
+    from precedent.config import Config
+    from precedent.errors import PrecedentError
+    from precedent.http import HttpClient
+    from precedent.render import render_recipient
+
+    config = Config.from_env()
+    try:
+        with HttpClient(config) as http:
+            outcome = recipient_profile(
+                identifier, config=config, http=http, no_cache=no_cache or None
+            )
+    except PrecedentError as error:
+        _emit(f"STOP: {error}")
+        sys.exit(4)
+
+    if as_json:
+        _emit(jsonlib.dumps(outcome.as_dict(), indent=2, default=str))
+        return
+    _emit(render_recipient(outcome))
+
+
+@main.command("mcp")
+def mcp() -> None:
+    """Run the Model Context Protocol server over stdio.
+
+    Exposes award_history, passthrough_finder, recipient_profile and find_program as tools,
+    each returning exactly what `--json` returns. Needs the optional `mcp` extra:
+
+    
+      uvx --from 'federal-precedent[mcp]' precedent mcp
+    """
+    from precedent.errors import PrecedentError
+
+    try:
+        from precedent.mcp_server import main as serve
+
+        serve()
+    except PrecedentError as error:
+        _emit(f"STOP: {error}")
+        sys.exit(4)
+    except KeyboardInterrupt:  # pragma: no cover
+        pass
+
+
 @main.command("programs")
 @click.argument("search_text")
 @click.option("--limit", default=20, show_default=True, help="How many listings to return.")
