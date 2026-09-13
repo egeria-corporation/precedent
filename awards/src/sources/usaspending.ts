@@ -34,9 +34,25 @@ export const GRANT_AWARD_TYPES = ["02", "03", "04", "05"];
 const PAGE_LIMIT = 100;
 export const MAX_RECORDS = 20_000;
 
-/** A Worker has a wall-clock budget, so the page bound is lower than the tool's. Hitting it
- *  is reported rather than silently truncating a statistic. */
-const MAX_PAGES = 60;
+/**
+ * The pagination bound, in requests of 100 records.
+ *
+ * It exists to stop a runaway loop, not to cap a real program: truncating this pull does
+ * not return less data, it returns *wrong* data. The upstream sorts by Award Amount
+ * descending, so the records that fall off the end are the smallest awards, every
+ * percentile shifts upward, and the median can be several times too high while the page
+ * looks entirely normal. At 60 this silently reported a median of $1.95M for 93.243 against
+ * a true $1.25M.
+ *
+ * So the bound is set above what any real program needs, `truncated` is returned when it is
+ * hit anyway, and the caller refuses to render rather than publishing a biased number.
+ *
+ * The real ceiling is Cloudflare's subrequest budget per invocation: 50 on the free plan,
+ * 1,000 on paid. A large program needs on the order of 80 sequential requests, so this only
+ * fits on a paid plan - and on the free plan the guard turns that into an honest refusal
+ * rather than a wrong answer.
+ */
+const MAX_PAGES = 120;
 
 const FIELDS = [
   "Award ID",
