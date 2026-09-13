@@ -26,3 +26,30 @@ jobs:
         run: uv run ruff format --check .
       - name: Test
         run: uv run pytest -q
+
+  # The hosted companion. Without this job the Worker has no continuous integration at all:
+  # its lint, its types and its parity-with-Python tests would only ever run on somebody's
+  # laptop, and the parity test is the acceptance criterion for every number the site shows.
+  awards:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: awards
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: awards/pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Lint and format check
+        run: pnpm exec biome check src test
+      - name: Types
+        run: pnpm exec tsc --noEmit
+      - name: Test
+        run: pnpm exec vitest run

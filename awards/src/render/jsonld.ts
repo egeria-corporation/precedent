@@ -56,10 +56,11 @@ export function derivedDataset(
     "@context": "https://schema.org",
     "@type": "Dataset",
     name: `Award history statistics for Assistance Listing ${profile.program}`,
-    description:
-      `Derived award-size distribution, new-entrant rate and recipient concentration for ` +
-      `Assistance Listing ${profile.program}, federal fiscal years ${profile.sinceFy} ` +
+    description: [
+      "Derived award-size distribution, new-entrant rate and recipient concentration for",
+      `Assistance Listing ${profile.program}, federal fiscal years ${profile.sinceFy}`,
       `through ${profile.untilFy}.`,
+    ].join(" "),
     url: `${origin}/programs/${profile.program}`,
     // Schema.org's ISO 8601 interval form. The fiscal year runs to September 30.
     temporalCoverage: `${profile.sinceFy - 1}-10-01/${profile.untilFy}-09-30`,

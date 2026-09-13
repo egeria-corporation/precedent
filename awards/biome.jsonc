@@ -10,6 +10,16 @@
         // renders to a string once, server-side; there is no reconciliation and no client
         // runtime, so a key here is noise with no behaviour attached.
         "useJsxKeyInIterable": "off"
+      },
+      "security": {
+        // This rule exists to stop user input reaching innerHTML in a React app. There is
+        // no React here, no client runtime at all, and the two uses on this site are a
+        // constant stylesheet from this repository and JSON-LD serialized from our own
+        // objects by serializeJsonLd, which escapes the one sequence that could close a
+        // script element early. Hono JSX offers no other way to inline either. Left on, the
+        // rule can only be suppressed per-use, and biome does not honour a `//` suppression
+        // in JSX attribute position - so it would have to be silenced anyway, less visibly.
+        "noDangerouslySetInnerHtml": "off"
       }
     }
   },

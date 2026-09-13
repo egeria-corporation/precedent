@@ -59,14 +59,14 @@ export const Page: FC<PropsWithChildren<PageMeta>> = ({
       <meta property="og:type" content="website" />
       <meta name="twitter:card" content="summary" />
       {(jsonLd ?? []).map((block) => (
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is serialized by us
-        // from our own objects, and the serializer escapes the one sequence that could break
-        // out of a script element.
+        // Serialized here from our own objects; serializeJsonLd escapes the one sequence
+        // that could close the script element early. No user input reaches this.
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(block) }}
         />
       ))}
+      {/* A constant stylesheet from this repository: no interpolation, no user input. */}
       <style dangerouslySetInnerHTML={{ __html: STYLES }} />
     </head>
     <body>
