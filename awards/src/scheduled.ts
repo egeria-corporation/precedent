@@ -13,6 +13,7 @@
  */
 
 import { readVintage, writeVintage } from "./cache";
+import { politeFetch } from "./fetcher";
 import { type SitemapUrl, chunkKey, indexKey, renderIndex, renderUrlset } from "./seo/sitemap";
 import { buildUrls, chunk } from "./seo/sitemap";
 import { STATES } from "./states";
@@ -51,14 +52,13 @@ export async function probeVintage(env: Env): Promise<string> {
   let facStamp = "unknown";
   if (env.FAC_API_KEY) {
     try {
-      const response = await fetch(
-        "https://api.fac.gov/general?select=fac_accepted_date&order=fac_accepted_date.desc&limit=1",
-        { headers: { "X-Api-Key": env.FAC_API_KEY, accept: "application/json" } },
-      );
-      if (response.ok) {
-        const rows = (await response.json()) as { fac_accepted_date?: string }[];
-        facStamp = rows[0]?.fac_accepted_date?.slice(0, 10) ?? "unknown";
-      }
+      const response = await politeFetch({
+        source: "fac",
+        url: "https://api.fac.gov/general?select=fac_accepted_date&order=fac_accepted_date.desc&limit=1",
+        headers: { "X-Api-Key": env.FAC_API_KEY },
+      });
+      const rows = (await response.json()) as { fac_accepted_date?: string }[];
+      facStamp = rows[0]?.fac_accepted_date?.slice(0, 10) ?? "unknown";
     } catch {
       // A failed probe keeps the old vintage, which is correct: the alternative is
       // invalidating the whole site because one request timed out.
@@ -84,9 +84,7 @@ async function warm(origin: string, paths: string[]): Promise<number> {
   let warmed = 0;
   for (const path of paths.slice(0, MAX_WARM)) {
     try {
-      const response = await fetch(`${origin}${path}`, {
-        headers: { "user-agent": "awards.opengrants.io cache warmer" },
-      });
+      const response = await politeFetch({ source: "self", url: `${origin}${path}` });
       if (response.ok) warmed += 1;
     } catch {
       // One failed warm is not worth ending the run over.

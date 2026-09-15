@@ -19,6 +19,7 @@
 
 import type { Award } from "../analysis/profile";
 import { cachedFetch, canonicalRequest } from "../cache";
+import { politeFetch } from "../fetcher";
 import type { Env } from "../types";
 
 const SOURCE = "usaspending" as const;
@@ -153,14 +154,12 @@ async function postJson(
     canonical,
     vintage,
     async () => {
-      const response = await fetch(url, {
+      const response = await politeFetch({
+        source: SOURCE,
+        url,
         method: "POST",
-        headers: { "content-type": "application/json", accept: "application/json" },
-        body: JSON.stringify(payload),
+        body: payload,
       });
-      if (!response.ok) {
-        throw new UpstreamError(`usaspending returned HTTP ${response.status}`);
-      }
       return (await response.json()) as Record<string, unknown>;
     },
   );

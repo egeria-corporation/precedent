@@ -136,6 +136,16 @@ app.get("/programs/:aln", async (c) => {
     try {
       awards = await search(c.env, vintage, filters);
     } catch (error) {
+      // Logged, not swallowed: a page that says "the upstream did not answer" is honest to a
+      // reader and useless to whoever has to fix it. Invocation logs are off, so this line
+      // is the only record that the request happened at all.
+      console.error(
+        JSON.stringify({
+          route: "programs",
+          program: aln,
+          error: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+        }),
+      );
       const detail =
         error instanceof TooMuchData
           ? error.message

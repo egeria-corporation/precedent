@@ -23,7 +23,7 @@
       // Two jobs in one namespace, separated by key prefix: `u:` holds upstream responses,
       // `meta:` holds the vintage pointer that every cache key on both layers includes.
       "binding": "CACHE",
-      "id": "PLACEHOLDER_CREATE_WITH_WRANGLER_KV_NAMESPACE_CREATE"
+      "id": "0d51880ff0d843d4bbd6018d3041bb1c"
     }
   ],
 

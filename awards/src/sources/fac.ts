@@ -23,6 +23,7 @@
  */
 
 import { cachedFetch, canonicalRequest } from "../cache";
+import { politeFetch } from "../fetcher";
 import type { Env } from "../types";
 
 const SOURCE = "fac" as const;
@@ -254,12 +255,11 @@ async function page(
     canonical,
     vintage,
     async () => {
-      const response = await fetch(full, {
-        headers: { "X-Api-Key": apiKey, accept: "application/json" },
+      const response = await politeFetch({
+        source: SOURCE,
+        url: full,
+        headers: { "X-Api-Key": apiKey },
       });
-      if (!response.ok) {
-        throw new FacUpstreamError(`fac returned HTTP ${response.status}`);
-      }
       return (await response.json()) as Record<string, unknown>[];
     },
   );
