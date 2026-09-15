@@ -13,13 +13,18 @@
  */
 
 import { Hono } from "hono";
+import { buildPassthrough, intermediarySlug } from "./analysis/passthrough";
 import { SCHEMA_VERSION, buildProfile } from "./analysis/profile";
 import { readVintage, withPageCache } from "./cache";
 import { DISCLOSURE } from "./content";
 import { renderToHtml, renderUnavailable } from "./render/html";
+import { Page } from "./render/layout";
+import { IntermediaryPage, PassthroughStatePage } from "./render/passthrough";
 import { ProgramPage } from "./render/program";
 import { canonicalAln, defaultWindow } from "./routing";
+import { FacKeyMissing, audits, passthroughs, sefaAwards } from "./sources/fac";
 import { TooMuchData, buildFilters, findPrograms, search } from "./sources/usaspending";
+import { STATES, stateName } from "./states";
 import type { Env } from "./types";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -181,6 +186,214 @@ app.get("/programs/cfda/:aln", (c) => {
   const aln = canonicalAln(c.req.param("aln"));
   return aln ? c.redirect(`/programs/${aln}`, 301) : c.notFound();
 });
+
+/**
+ * One state's pass-through funders, from the two evidence streams.
+ *
+ * Four sequential calls rather than one join, because FAC asks partners for small
+ * restrictive queries and its own documentation says to join client side. The two award
+ * pulls are separate because they answer opposite questions: who funded these auditees, and
+ * whom did these auditees fund.
+ */
+async function passthroughFor(env: Env, state: string, program: string | null) {
+  const vintage = await readVintage(env);
+  // Audits are filed months after a fiscal year ends, so the most recent year with useful
+  // coverage is behind the calendar. Three years keeps an edge request inside its budget.
+  const untilYear = new Date().getUTCFullYear() - 1;
+  const sinceYear = untilYear - 2;
+
+  const { audits: rows, fetchedAt: auditsAt } = await audits(
+    env,
+    vintage,
+    state,
+    sinceYear,
+    untilYear,
+  );
+  const reportIds = rows.map((a) => a.reportId).filter(Boolean);
+  const indirect = await sefaAwards(env, vintage, {
+    reportIds,
+    listing: program,
+    direction: "received",
+  });
+  const named = await passthroughs(env, vintage, reportIds);
+  const supply = await sefaAwards(env, vintage, {
+    reportIds,
+    listing: program,
+    direction: "passed",
+  });
+
+  const retrieved =
+    [auditsAt, indirect.fetchedAt, named.fetchedAt, supply.fetchedAt]
+      .filter((d): d is string => Boolean(d))
+      .sort()[0] ?? null;
+
+  return {
+    vintage,
+    result: buildPassthrough({
+      state,
+      program,
+      audits: rows,
+      indirectAwards: indirect.awards,
+      passthroughRows: named.rows,
+      supplyAwards: supply.awards,
+      retrieved,
+      requestedSinceYear: sinceYear,
+    }),
+  };
+}
+
+function keyMissingPage(origin: string, what: string): string {
+  return renderUnavailable(
+    origin,
+    what,
+    "Pass-through figures come from the Federal Audit Clearinghouse, and this deployment " +
+      "has no API key configured for it. Award history pages are unaffected.",
+  );
+}
+
+function upstreamDown(origin: string, what: string): string {
+  return renderUnavailable(
+    origin,
+    what,
+    "The Federal Audit Clearinghouse did not answer. Pass-through figures are temporarily " +
+      "unavailable; this is a condition of the source rather than a statement about the data.",
+  );
+}
+
+/** The flagship page: who passes federal money to organizations in one state. */
+app.get("/passthrough/:state", async (c) => {
+  const raw = c.req.param("state");
+  const code = raw.toUpperCase();
+  const name = stateName(code);
+  // Enumerated rather than accepted from the URL: generating pages for combinations with no
+  // data is the most effective way to make a site look like spam.
+  if (!name) return c.notFound();
+  if (raw !== raw.toLowerCase()) return c.redirect(`/passthrough/${raw.toLowerCase()}`, 301);
+
+  return withPageCache(c.req.raw, c.executionCtx, c.env, async () => {
+    try {
+      const { result, vintage } = await passthroughFor(c.env, code, null);
+      return {
+        html: renderToHtml(
+          <PassthroughStatePage
+            origin={c.env.SITE_ORIGIN}
+            result={result}
+            stateName={name}
+            vintage={vintage}
+          />,
+        ),
+      };
+    } catch (error) {
+      const html =
+        error instanceof FacKeyMissing
+          ? keyMissingPage(c.env.SITE_ORIGIN, name)
+          : upstreamDown(c.env.SITE_ORIGIN, name);
+      return { html, status: 503 };
+    }
+  });
+});
+
+app.get("/passthrough/:state/:aln", async (c) => {
+  const code = c.req.param("state").toUpperCase();
+  const name = stateName(code);
+  const aln = canonicalAln(c.req.param("aln"));
+  if (!name || !aln) return c.notFound();
+
+  return withPageCache(c.req.raw, c.executionCtx, c.env, async () => {
+    try {
+      const { result, vintage } = await passthroughFor(c.env, code, aln);
+      return {
+        html: renderToHtml(
+          <PassthroughStatePage
+            origin={c.env.SITE_ORIGIN}
+            result={result}
+            stateName={name}
+            vintage={vintage}
+          />,
+        ),
+      };
+    } catch (error) {
+      const what = `${name} ${aln}`;
+      const html =
+        error instanceof FacKeyMissing
+          ? keyMissingPage(c.env.SITE_ORIGIN, what)
+          : upstreamDown(c.env.SITE_ORIGIN, what);
+      return { html, status: 503 };
+    }
+  });
+});
+
+/** One pass-through entity. The slug carries its state, which is how it is found again. */
+app.get("/intermediaries/:slug", async (c) => {
+  const slug = c.req.param("slug");
+  const name = stateName(slug.slice(0, 2));
+  if (!name) return c.notFound();
+
+  return withPageCache(c.req.raw, c.executionCtx, c.env, async () => {
+    try {
+      const { result, vintage } = await passthroughFor(c.env, slug.slice(0, 2).toUpperCase(), null);
+      const entity = result.intermediaries.find(
+        (e) => intermediarySlug(e.state, e.clusterKey) === slug,
+      );
+      if (!entity) {
+        return {
+          html: renderUnavailable(
+            c.env.SITE_ORIGIN,
+            slug,
+            "No pass-through entity with this identifier appears in the single audits for " +
+              "this state and window.",
+          ),
+          status: 404,
+        };
+      }
+      return {
+        html: renderToHtml(
+          <IntermediaryPage
+            origin={c.env.SITE_ORIGIN}
+            entity={entity}
+            stateName={name}
+            coverage={result.coverage}
+            vintage={vintage}
+          />,
+        ),
+      };
+    } catch (error) {
+      const html =
+        error instanceof FacKeyMissing
+          ? keyMissingPage(c.env.SITE_ORIGIN, slug)
+          : upstreamDown(c.env.SITE_ORIGIN, slug);
+      return { html, status: 503 };
+    }
+  });
+});
+
+/** Every state and territory, so the flagship pages are reachable and crawlable. */
+app.get("/passthrough", async (c) =>
+  withPageCache(c.req.raw, c.executionCtx, c.env, async () => ({
+    html: renderToHtml(
+      <Page
+        title="Who passes federal money down, by state"
+        description="Federal pass-through funders for every state and territory, from single audits."
+        canonical={`${c.env.SITE_ORIGIN}/passthrough`}
+      >
+        <h1>Who passes federal money down, by state</h1>
+        <p class="lede">
+          USAspending records the award the government made to a state agency. The organizations
+          that agency re-grants to appear only in single audits, where each subrecipient had to name
+          who passed the money. Pick a state.
+        </p>
+        <p>
+          {Object.entries(STATES).map(([code, label], i) => (
+            <>
+              {i ? ", " : ""}
+              <a href={`/passthrough/${code.toLowerCase()}`}>{label}</a>
+            </>
+          ))}
+        </p>
+      </Page>,
+    ),
+  })),
+);
 
 app.get("/", async (c) =>
   withPageCache(c.req.raw, c.executionCtx, c.env, async () => ({
