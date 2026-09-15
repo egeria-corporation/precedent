@@ -17,11 +17,16 @@ import { buildPassthrough, intermediarySlug } from "./analysis/passthrough";
 import { SCHEMA_VERSION, buildProfile } from "./analysis/profile";
 import { readVintage, withPageCache } from "./cache";
 import { DISCLOSURE } from "./content";
+import { About, CoveragePage, Home, Methodology } from "./render/editorial";
 import { renderToHtml, renderUnavailable } from "./render/html";
 import { Page } from "./render/layout";
 import { IntermediaryPage, PassthroughStatePage } from "./render/passthrough";
 import { ProgramPage } from "./render/program";
 import { canonicalAln, defaultWindow } from "./routing";
+import { scheduled } from "./scheduled";
+import { llmsTxt, robotsTxt } from "./seo/llms";
+import { ogImage } from "./seo/og";
+import { indexKey } from "./seo/sitemap";
 import { FacKeyMissing, audits, passthroughs, sefaAwards } from "./sources/fac";
 import { TooMuchData, buildFilters, findPrograms, search } from "./sources/usaspending";
 import { STATES, stateName } from "./states";
@@ -395,13 +400,117 @@ app.get("/passthrough", async (c) =>
   })),
 );
 
+/** The editorial pages. Static enough to cache hard, still vintage-keyed like everything. */
 app.get("/", async (c) =>
   withPageCache(c.req.raw, c.executionCtx, c.env, async () => ({
-    html: `<!doctype html><meta charset="utf-8"><title>awards.opengrants.io</title>
-<h1>awards.opengrants.io</h1>
-<p>Federal award history and pass-through funder analysis. Pages are being built.</p>
-<p>Working now: <a href="/api/programs/93.243.json">/api/programs/93.243.json</a></p>`,
+    html: renderToHtml(<Home origin={c.env.SITE_ORIGIN} />),
+    maxAge: 86_400,
   })),
 );
 
-export default app;
+app.get("/methodology", async (c) =>
+  withPageCache(c.req.raw, c.executionCtx, c.env, async () => ({
+    html: renderToHtml(<Methodology origin={c.env.SITE_ORIGIN} />),
+    maxAge: 86_400,
+  })),
+);
+
+app.get("/coverage", async (c) =>
+  withPageCache(c.req.raw, c.executionCtx, c.env, async () => ({
+    html: renderToHtml(<CoveragePage origin={c.env.SITE_ORIGIN} />),
+    maxAge: 86_400,
+  })),
+);
+
+app.get("/about", async (c) =>
+  withPageCache(c.req.raw, c.executionCtx, c.env, async () => ({
+    html: renderToHtml(<About origin={c.env.SITE_ORIGIN} />),
+    maxAge: 86_400,
+  })),
+);
+
+/**
+ * `/llms.txt`. The coverage limitation in it is the point: a model summarizing this site
+ * carries forward what it reads here, and a summary presenting pass-through counts as
+ * complete is wrong.
+ */
+app.get("/llms.txt", async (c) => {
+  const vintage = await readVintage(c.env);
+  return c.text(llmsTxt(vintage, null), 200, {
+    "content-type": "text/plain; charset=utf-8",
+    "cache-control": "public, max-age=3600",
+  });
+});
+
+/** Allow everything, model crawlers included. Being quoted is the objective. */
+app.get("/robots.txt", (c) =>
+  c.text(robotsTxt(c.env.SITE_ORIGIN), 200, {
+    "content-type": "text/plain; charset=utf-8",
+    "cache-control": "public, max-age=86400",
+  }),
+);
+
+/** The sitemap index and its chunks, written to R2 by the weekly job. */
+app.get("/sitemap.xml", async (c) => {
+  const object = await c.env.ASSETS.get(indexKey(c.env.ASSET_PREFIX));
+  if (!object) return c.notFound();
+  return new Response(object.body, {
+    headers: { "content-type": "application/xml", "cache-control": "public, max-age=3600" },
+  });
+});
+
+app.get("/sitemaps/:name", async (c) => {
+  const name = c.req.param("name");
+  if (!/^sitemap-\d{5}\.xml$/.test(name)) return c.notFound();
+  const object = await c.env.ASSETS.get(`${c.env.ASSET_PREFIX}/sitemaps/${name}`);
+  if (!object) return c.notFound();
+  return new Response(object.body, {
+    headers: { "content-type": "application/xml", "cache-control": "public, max-age=3600" },
+  });
+});
+
+/**
+ * The social card, generated at the edge from the page's own headline figure.
+ *
+ * A static image would say the same thing on every page, which for a site whose value is one
+ * number per page is close to saying nothing.
+ */
+app.get("/og/programs/:aln", async (c) => {
+  const aln = canonicalAln(c.req.param("aln").replace(/\.svg$/, ""));
+  if (!aln) return c.notFound();
+  const vintage = await readVintage(c.env);
+  const [sinceFy, untilFy] = defaultWindow();
+  try {
+    const filters = buildFilters(aln, `${sinceFy - 6}-10-01`, `${untilFy + 1}-09-30`);
+    const { awards, truncated } = await search(c.env, vintage, filters);
+    if (truncated) throw new Error("truncated");
+    const p = buildProfile(awards, { program: aln, sinceFy, untilFy, lookbackYears: 5 });
+    return new Response(
+      ogImage({
+        eyebrow: `Assistance Listing ${aln}`,
+        title: `${p.windowAwardCount.toLocaleString()} awards to ${p.recipientCount.toLocaleString()} recipients`,
+        figure: p.newEntrantRate === null ? undefined : `${(p.newEntrantRate * 100).toFixed(1)}%`,
+        figureLabel: `had won nothing under this program in the ${p.lookbackYears} years before`,
+        footnote: `awards.opengrants.io - FY${p.sinceFy} to FY${p.untilFy}`,
+      }),
+      { headers: { "content-type": "image/svg+xml", "cache-control": "public, max-age=86400" } },
+    );
+  } catch {
+    return new Response(
+      ogImage({
+        eyebrow: `Assistance Listing ${aln}`,
+        title: "Federal award history",
+        footnote: "awards.opengrants.io",
+      }),
+      { headers: { "content-type": "image/svg+xml", "cache-control": "public, max-age=300" } },
+    );
+  }
+});
+
+export default {
+  fetch: app.fetch,
+  /** Thursday 09:00 UTC. See scheduled.ts for why everything in it is paced. */
+  async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(scheduled(env));
+  },
+};

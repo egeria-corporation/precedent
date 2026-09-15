@@ -14,15 +14,21 @@ import type { Identity } from "./identity";
 import { identityKey, nameTierIsHigh, resolutionMix, resolve } from "./identity";
 
 /**
- * The version of the arithmetic on this page, not of the data behind it.
+ * The version of everything this site produces, as opposed to the data behind it.
  *
- * It sits here, immediately beside the statistics, because it exists for exactly one
- * reason: **changing a calculation in this file without bumping this number serves stale
- * wrong numbers.** Every cache key on both layers includes it, so a bump invalidates every
- * page computed by the old code. That is the most likely serious bug on this site, and it
- * is invisible when it happens - the page looks entirely normal and the number is wrong.
+ * It sits here, immediately beside the statistics, because the worst way to get it wrong is
+ * to change a calculation without bumping it: every page computed by the old code keeps
+ * being served under the new code, and nothing about such a page looks wrong.
+ *
+ * **It covers renders too, not only arithmetic.** The vintage moves when the upstream data
+ * moves; this number is the only thing that moves when *our* output changes, and a template
+ * edit changes output exactly as much as a formula does. Version 1 shipped a placeholder
+ * home page; version 2 replaced it, and without a bump the Cache API went on serving the
+ * placeholder, which is how this rule earned its second sentence.
+ *
+ * Bump it for: a changed statistic, a changed page template, a changed JSON shape.
  */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const DEFAULT_LOOKBACK_YEARS = 5;
 const TOP_N = 10;
